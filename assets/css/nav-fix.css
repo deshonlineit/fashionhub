@@ -1,6 +1,8 @@
-/* FashionHub desktop category navigation refinement */
+/* FashionHub desktop category navigation - FerryTelecom-style mega menu */
 @media (min-width: 981px) {
-  .site-header {
+  .site-header,
+  .primary-nav-wrap,
+  .header-main {
     overflow: visible;
   }
 
@@ -10,34 +12,35 @@
     gap: clamp(18px, 2.6vw, 38px);
   }
 
-  /* Move All Categories visually into the lower navigation row. */
+  /* Category trigger lives in the lower navigation row. */
   .header-main > .category-launcher {
     position: absolute;
     left: 0;
-    top: calc(100% + 8px);
-    z-index: 120;
-    height: 36px;
+    top: calc(100% + 7px);
+    z-index: 150;
+    height: 40px;
     display: flex;
     align-items: center;
   }
 
   .category-launcher__button {
-    height: 38px;
-    min-width: 182px;
-    padding: 0 15px;
-    border-radius: 10px;
+    height: 40px;
+    min-width: 196px;
+    padding: 0 16px;
+    border-radius: 8px;
     font-size: 12px;
-    box-shadow: 0 8px 22px rgba(244, 50, 104, 0.16);
+    letter-spacing: .01em;
+    box-shadow: 0 6px 18px rgba(244, 50, 104, .15);
     transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
   }
 
   .category-launcher__button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 11px 28px rgba(244, 50, 104, 0.22);
+    box-shadow: 0 10px 24px rgba(244, 50, 104, .2);
   }
 
   .category-launcher__button .chevron {
-    transition: transform .32s cubic-bezier(.22,.61,.36,1);
+    transition: transform .28s cubic-bezier(.22,.61,.36,1);
   }
 
   .category-launcher.is-open .category-launcher__button .chevron {
@@ -45,15 +48,14 @@
   }
 
   .primary-nav-wrap {
-    min-height: 52px;
-    overflow: visible;
+    min-height: 54px;
   }
 
   .primary-nav {
-    min-height: 52px;
+    min-height: 54px;
     justify-content: flex-start;
-    padding-left: clamp(220px, 18vw, 286px);
-    gap: clamp(20px, 2.6vw, 40px);
+    padding-left: clamp(228px, 18vw, 292px);
+    gap: clamp(20px, 2.5vw, 38px);
   }
 
   .primary-nav > ul {
@@ -61,31 +63,33 @@
   }
 
   .primary-nav a {
-    min-height: 52px;
+    min-height: 54px;
   }
 
-  /* Main category dropdown: smooth top-to-bottom reveal. */
+  /* Main vertical category rail. */
   .category-mega {
-    top: calc(100% + 8px);
+    top: calc(100% + 7px);
     left: 0;
-    width: 300px;
-    min-height: 0;
-    max-height: min(560px, 72vh);
-    padding: 10px;
+    width: 286px;
+    min-height: 460px;
+    max-height: min(640px, 76vh);
+    padding: 8px;
     overflow: visible;
-    border-radius: 0 0 16px 16px;
-    box-shadow: 0 24px 58px rgba(25, 27, 38, 0.16);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 18px 42px rgba(18, 22, 35, .14);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateY(-16px);
-    clip-path: inset(0 0 100% 0 round 0 0 16px 16px);
+    transform: translateY(-14px);
+    clip-path: inset(0 0 100% 0);
     transform-origin: top center;
     transition:
-      opacity .18s ease,
-      transform .36s cubic-bezier(.22,.61,.36,1),
-      clip-path .36s cubic-bezier(.22,.61,.36,1),
-      visibility 0s linear .36s;
+      opacity .16s ease,
+      transform .34s cubic-bezier(.22,.61,.36,1),
+      clip-path .34s cubic-bezier(.22,.61,.36,1),
+      visibility 0s linear .34s;
   }
 
   .category-launcher.is-open .category-mega {
@@ -93,74 +97,174 @@
     visibility: visible;
     pointer-events: auto;
     transform: translateY(0);
-    clip-path: inset(0 0 0 0 round 0 0 16px 16px);
+    clip-path: inset(0 0 0 0);
     transition-delay: 0s;
   }
 
   .category-mega > ul {
-    max-height: min(540px, 70vh);
+    max-height: min(622px, 74vh);
     overflow-y: auto;
     overflow-x: visible;
+    scrollbar-width: thin;
   }
 
   .category-mega > ul > li {
-    position: relative;
+    position: static;
   }
 
-  /* Child mega menu: wide, balanced columns, no cramped text. */
-  .category-mega ul ul {
-    left: calc(100% + 10px);
-    top: -10px;
-    width: clamp(560px, 56vw, 780px);
-    min-height: 100%;
-    max-height: min(560px, 72vh);
-    padding: 24px 28px;
+  .category-mega > ul > li > a {
+    min-height: 46px;
+    padding: 8px 11px;
+    border-radius: 6px;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .category-mega > ul > li > a > svg:last-child {
+    margin-left: auto;
+    width: 12px;
+    height: 12px;
+  }
+
+  .category-mega .menu-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+  }
+
+  /* FerryTelecom-like child mega panel: wide white canvas with category groups. */
+  .category-mega > ul > li > ul {
+    position: absolute;
+    left: calc(100% + 1px);
+    top: -1px;
+    width: clamp(720px, 62vw, 980px);
+    min-height: 460px;
+    max-height: min(640px, 76vh);
+    padding: 24px 28px 28px;
     overflow: auto;
-    grid-template-columns: repeat(3, minmax(150px, 1fr));
+    display: grid;
+    grid-template-columns: repeat(4, minmax(145px, 1fr));
     align-content: start;
-    gap: 20px 28px;
-    border-radius: 0 0 16px 16px;
-    box-shadow: 0 24px 58px rgba(25, 27, 38, 0.16);
+    gap: 26px 30px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-left: 0;
+    border-radius: 0 0 10px 0;
+    box-shadow: 18px 18px 42px rgba(18, 22, 35, .13);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
     transform: translateX(-10px);
-    transition: opacity .18s ease, transform .28s cubic-bezier(.22,.61,.36,1), visibility 0s linear .28s;
+    transition: opacity .16s ease, transform .24s cubic-bezier(.22,.61,.36,1), visibility 0s linear .24s;
   }
 
-  .category-mega li:hover > ul,
-  .category-mega li:focus-within > ul {
+  .category-mega > ul > li:hover > ul,
+  .category-mega > ul > li:focus-within > ul {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
     transform: translateX(0);
     transition-delay: 0s;
   }
 
-  .category-mega ul ul a {
+  /* Level 2 acts like a section title; level 3 is the product/category list below it. */
+  .category-mega > ul > li > ul > li {
+    min-width: 0;
+  }
+
+  .category-mega > ul > li > ul > li > a {
+    min-height: auto;
+    margin: 0 0 7px;
+    padding: 0 0 8px;
+    border-radius: 0;
+    border-bottom: 1px solid #eeeeF3;
+    background: transparent !important;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.3;
+  }
+
+  .category-mega > ul > li > ul > li > a:hover {
+    color: var(--accent);
+  }
+
+  .category-mega > ul > li > ul > li > ul {
+    position: static;
+    width: auto;
+    min-height: 0;
+    max-height: none;
+    padding: 0;
+    overflow: visible;
+    display: block;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  .category-mega > ul > li > ul > li > ul > li > a {
+    min-height: 30px;
+    padding: 4px 0;
+    border-radius: 0;
+    background: transparent !important;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
     white-space: normal;
-    line-height: 1.35;
+  }
+
+  .category-mega > ul > li > ul > li > ul > li > a:hover {
+    color: var(--accent);
+    transform: translateX(2px);
+  }
+
+  /* Keep ordinary nav dropdowns compact. */
+  .primary-nav ul ul {
+    z-index: 130;
   }
 }
 
-@media (min-width: 981px) and (max-width: 1180px) {
-  .header-main {
-    grid-template-columns: auto minmax(240px, 1fr) auto;
-    gap: 18px;
+@media (min-width: 981px) and (max-width: 1280px) {
+  .primary-nav {
+    padding-left: 214px;
+    gap: 22px;
   }
 
   .category-launcher__button {
-    min-width: 162px;
+    min-width: 184px;
   }
 
+  .category-mega {
+    width: 270px;
+  }
+
+  .category-mega > ul > li > ul {
+    width: min(760px, calc(100vw - 320px));
+    grid-template-columns: repeat(3, minmax(145px, 1fr));
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1080px) {
   .primary-nav {
-    padding-left: 190px;
-    gap: 24px;
+    padding-left: 200px;
+    gap: 17px;
   }
 
-  .category-mega ul ul {
-    width: min(650px, 60vw);
+  .category-mega > ul > li > ul {
     grid-template-columns: repeat(2, minmax(160px, 1fr));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .category-mega,
-  .category-mega ul ul,
+  .category-mega > ul > li > ul,
   .category-launcher__button,
   .category-launcher__button .chevron {
     transition: none !important;
