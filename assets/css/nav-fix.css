@@ -1,0 +1,168 @@
+/* FashionHub desktop category navigation refinement */
+@media (min-width: 981px) {
+  .site-header {
+    overflow: visible;
+  }
+
+  .header-main {
+    position: relative;
+    grid-template-columns: auto minmax(320px, 1fr) auto;
+    gap: clamp(18px, 2.6vw, 38px);
+  }
+
+  /* Move All Categories visually into the lower navigation row. */
+  .header-main > .category-launcher {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 8px);
+    z-index: 120;
+    height: 36px;
+    display: flex;
+    align-items: center;
+  }
+
+  .category-launcher__button {
+    height: 38px;
+    min-width: 182px;
+    padding: 0 15px;
+    border-radius: 10px;
+    font-size: 12px;
+    box-shadow: 0 8px 22px rgba(244, 50, 104, 0.16);
+    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+  }
+
+  .category-launcher__button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 11px 28px rgba(244, 50, 104, 0.22);
+  }
+
+  .category-launcher__button .chevron {
+    transition: transform .32s cubic-bezier(.22,.61,.36,1);
+  }
+
+  .category-launcher.is-open .category-launcher__button .chevron {
+    transform: rotate(180deg);
+  }
+
+  .primary-nav-wrap {
+    min-height: 52px;
+    overflow: visible;
+  }
+
+  .primary-nav {
+    min-height: 52px;
+    justify-content: flex-start;
+    padding-left: clamp(220px, 18vw, 286px);
+    gap: clamp(20px, 2.6vw, 40px);
+  }
+
+  .primary-nav > ul {
+    justify-content: flex-start;
+  }
+
+  .primary-nav a {
+    min-height: 52px;
+  }
+
+  /* Main category dropdown: smooth top-to-bottom reveal. */
+  .category-mega {
+    top: calc(100% + 8px);
+    left: 0;
+    width: 300px;
+    min-height: 0;
+    max-height: min(560px, 72vh);
+    padding: 10px;
+    overflow: visible;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 24px 58px rgba(25, 27, 38, 0.16);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-16px);
+    clip-path: inset(0 0 100% 0 round 0 0 16px 16px);
+    transform-origin: top center;
+    transition:
+      opacity .18s ease,
+      transform .36s cubic-bezier(.22,.61,.36,1),
+      clip-path .36s cubic-bezier(.22,.61,.36,1),
+      visibility 0s linear .36s;
+  }
+
+  .category-launcher.is-open .category-mega {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0 round 0 0 16px 16px);
+    transition-delay: 0s;
+  }
+
+  .category-mega > ul {
+    max-height: min(540px, 70vh);
+    overflow-y: auto;
+    overflow-x: visible;
+  }
+
+  .category-mega > ul > li {
+    position: relative;
+  }
+
+  /* Child mega menu: wide, balanced columns, no cramped text. */
+  .category-mega ul ul {
+    left: calc(100% + 10px);
+    top: -10px;
+    width: clamp(560px, 56vw, 780px);
+    min-height: 100%;
+    max-height: min(560px, 72vh);
+    padding: 24px 28px;
+    overflow: auto;
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+    align-content: start;
+    gap: 20px 28px;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 24px 58px rgba(25, 27, 38, 0.16);
+    transform: translateX(-10px);
+    transition: opacity .18s ease, transform .28s cubic-bezier(.22,.61,.36,1), visibility 0s linear .28s;
+  }
+
+  .category-mega li:hover > ul,
+  .category-mega li:focus-within > ul {
+    transform: translateX(0);
+    transition-delay: 0s;
+  }
+
+  .category-mega ul ul a {
+    white-space: normal;
+    line-height: 1.35;
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1180px) {
+  .header-main {
+    grid-template-columns: auto minmax(240px, 1fr) auto;
+    gap: 18px;
+  }
+
+  .category-launcher__button {
+    min-width: 162px;
+  }
+
+  .primary-nav {
+    padding-left: 190px;
+    gap: 24px;
+  }
+
+  .category-mega ul ul {
+    width: min(650px, 60vw);
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-mega,
+  .category-mega ul ul,
+  .category-launcher__button,
+  .category-launcher__button .chevron {
+    transition: none !important;
+  }
+}
