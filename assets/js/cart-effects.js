@@ -110,13 +110,11 @@
 
   function productTarget(id) {
     const candidates = [];
-    document.querySelectorAll(`.product-card[data-product-id="${CSS.escape(String(id))}"],.digital-card[data-product-id="${CSS.escape(String(id))}"]`).forEach(card => {
-      const image = card.querySelector('.product-card__media img,.digital-card img,img');
-      if (image) candidates.push(image);
+    document.querySelectorAll(addSelector).forEach(button => {
+      if (String(button.dataset.productId || '') !== String(id) || button.closest('.cart-drawer')) return;
+      const image = sourceImage(button);
+      if (image && !candidates.includes(image)) candidates.push(image);
     });
-    const productPageImage = document.querySelector('body[data-page="product"] .product-main-image img');
-    const productPageButton = document.querySelector(`body[data-page="product"] ${addSelector}`);
-    if (productPageImage && String(productPageButton?.dataset.productId || '') === String(id)) candidates.push(productPageImage);
     return candidates.find(isVisible) || candidates[0] || null;
   }
 
