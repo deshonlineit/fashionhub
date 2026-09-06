@@ -1,0 +1,43 @@
+/* FashionHub My Account — WooCommerce-style structure, premium storefront skin */
+body[data-page="account"]{font-size:15.5px}
+body[data-page="account"] #pageRoot{visibility:hidden}
+body[data-page="account"].account-ready #pageRoot{visibility:visible}
+body[data-page="account"] .account-page-shell{width:min(100% - 32px,1180px)!important;padding-bottom:70px!important}
+body[data-page="account"] .page-titlebar{padding-block:20px 28px!important}
+body[data-page="account"] .page-titlebar h1{font-size:clamp(32px,3.2vw,46px)!important}
+body[data-page="account"] .page-titlebar p{font-size:14px!important}
+
+.wc-auth-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(18px,3vw,32px);align-items:start}
+.wc-auth-card{padding:clamp(22px,3vw,30px);border:1px solid #e5e7ed;border-radius:16px;background:#fff;box-shadow:0 10px 30px rgba(24,28,40,.05)}
+.wc-auth-card h2{margin:0 0 20px;font-size:24px;letter-spacing:-.035em}
+.wc-form,.wc-account-form,.wc-edit-address{display:grid;gap:15px}
+.wc-form label,.wc-account-form label,.wc-edit-address label{display:grid;gap:7px;color:#3d424f;font-size:12px;font-weight:800}
+.wc-form label>span,.wc-account-form label>span,.wc-edit-address label>span{color:var(--accent)}
+.wc-form input,.wc-account-form input,.wc-edit-address input{width:100%;min-height:46px;padding:0 13px;border:1px solid #dfe2e8;border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:13px;outline:0;transition:border-color .2s ease,box-shadow .2s ease}
+.wc-form input:focus,.wc-account-form input:focus,.wc-edit-address input:focus{border-color:rgba(245,44,103,.55);box-shadow:0 0 0 4px rgba(245,44,103,.07)}
+.wc-form-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.wc-form-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.wc-form-row .primary-button{min-width:110px}
+.wc-remember{display:flex!important;grid-template-columns:16px auto;align-items:center;gap:7px!important;font-size:11px!important;font-weight:700!important}.wc-remember input{width:15px;height:15px;min-height:0;accent-color:var(--accent)}
+.wc-form-message,.wc-help{margin:0;color:#858a97;font-size:11px;line-height:1.6}.wc-form-message.is-error{color:#c92c4d}
+
+.wc-account-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:clamp(24px,3.5vw,44px);align-items:start}
+.wc-account-nav{position:sticky;top:84px;border:1px solid #e5e7ed;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 8px 28px rgba(24,28,40,.045)}
+.wc-account-user{display:flex;align-items:center;gap:11px;padding:16px;border-bottom:1px solid #eceef2;background:#fafbfc}.wc-account-user>div{min-width:0}.wc-account-user b,.wc-account-user small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wc-account-user b{font-size:12px}.wc-account-user small{margin-top:2px;color:#858a97;font-size:9.5px}
+.wc-avatar{width:38px;height:38px;flex:0 0 38px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-strong);font-size:12px;font-weight:900}
+.wc-account-nav nav{display:grid;padding:6px}
+.wc-nav-item{position:relative;width:100%;min-height:44px;padding:0 9px;border:0;border-radius:9px;background:transparent;color:#555b68;display:grid;grid-template-columns:18px minmax(0,1fr) 13px;align-items:center;gap:9px;text-align:left;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.wc-nav-item svg{width:16px;height:16px}.wc-nav-item>svg:last-child{width:12px;height:12px;color:#a3a7b0}.wc-nav-item:hover{background:#faf5f7;color:var(--accent-strong)}.wc-nav-item.is-active{background:var(--accent-soft);color:var(--accent-strong)}.wc-nav-item.is-active::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:99px;background:var(--accent)}.wc-nav-logout{margin-top:4px;border-top:1px solid #f0f1f4;border-radius:0;padding-top:4px;color:#7b808c}
+
+.wc-account-content{min-width:0}.wc-panel{min-height:320px;color:#555b68;font-size:13px;line-height:1.72}.wc-panel>p:first-child{margin-top:0}.wc-panel a,.wc-inline-link,.wc-hello button{border:0;padding:0;background:transparent;color:var(--accent-strong);font:inherit;font-weight:800;cursor:pointer}.wc-hello{font-size:14px;color:#454a57}.wc-hello>span{color:#777c88;font-size:12px}
+.wc-dashboard-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:24px}.wc-dashboard-links>button{min-height:78px;padding:14px;border:1px solid #e6e8ee;border-radius:12px;background:#fff;display:grid;grid-template-columns:28px minmax(0,1fr) 14px;gap:10px;align-items:center;text-align:left;color:#454a57;cursor:pointer}.wc-dashboard-links>button:hover{border-color:#ffd0dd;background:#fff9fb;box-shadow:0 10px 24px rgba(245,44,103,.06)}.wc-dashboard-links svg{width:21px;height:21px;color:var(--accent)}.wc-dashboard-links>button>svg:last-child{width:13px;height:13px;color:#a1a5ae}.wc-dashboard-links b,.wc-dashboard-links small{display:block}.wc-dashboard-links b{font-size:11px}.wc-dashboard-links small{margin-top:3px;color:#8a8f9b;font-size:9.5px}
+.wc-panel-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}.wc-panel-head h2,.wc-panel-head h3{margin:0;color:var(--ink);letter-spacing:-.025em}.wc-panel-head h2{font-size:22px}.wc-panel-head h3{font-size:17px}.wc-panel-head p{margin:4px 0 0;color:#7f8490;font-size:11.5px}
+.wc-table-wrap{overflow:auto;border:1px solid #e5e7ed;border-radius:12px;background:#fff}.wc-table{width:100%;border-collapse:collapse;min-width:690px}.wc-table th,.wc-table td{padding:13px 14px;border-bottom:1px solid #eceef2;text-align:left;vertical-align:middle;font-size:11px}.wc-table th{background:#fafbfc;color:#5d626e;font-size:10px;text-transform:none}.wc-table tbody tr:last-child td{border-bottom:0}.wc-table td{color:#676c78}.wc-table strong{color:#343846}.wc-status{display:inline-flex;align-items:center;min-height:25px;padding:0 8px;border-radius:99px;background:#edf9f4;color:#16845f;font-size:9px;font-weight:850}.wc-status--processing{background:#fff5df;color:#a36c00}.wc-small-btn{min-height:30px;padding:0 10px;border:1px solid #e1e4ea;border-radius:8px;background:#fff;color:#444957;font-size:9.5px;font-weight:850;cursor:pointer}.wc-small-btn:hover{border-color:#ffc9d8;background:#fff4f7;color:var(--accent-strong)}
+
+.wc-address-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.wc-address-cards article{min-height:190px;padding:18px;border:1px solid #e5e7ed;border-radius:12px;background:#fff}.wc-address-cards header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #eceef2}.wc-address-cards h3{margin:0;color:var(--ink);font-size:16px}.wc-address-cards header button{border:0;background:transparent;color:var(--accent-strong);font-size:10px;font-weight:850;cursor:pointer}.wc-address-cards address{margin-top:14px;color:#686d78;font-size:12px;line-height:1.8;font-style:normal}.wc-address-cards address em{color:#9397a1}
+.wc-edit-address{margin-top:18px;padding:20px;border:1px solid #e4e6ec;border-radius:12px;background:#fafbfc}.wc-edit-address[hidden]{display:none!important}.wc-cancel-edit{border:0;background:transparent;color:#747986;font-size:10px;font-weight:800;cursor:pointer}
+.wc-account-form{max-width:760px}.wc-account-form small{color:#9498a4;font-size:9.5px;font-weight:500}.wc-account-form fieldset{display:grid;gap:13px;margin:8px 0 0;padding:18px;border:1px solid #e5e7ed;border-radius:12px}.wc-account-form legend{padding:0 8px;color:#4d5260;font-size:11px;font-weight:850}
+
+.account-toast--error{border-color:#ffd1da!important;color:#b62545!important}
+
+@media (max-width:900px){.wc-account-layout{grid-template-columns:1fr}.wc-account-nav{position:static}.wc-account-nav nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.wc-nav-item{grid-template-columns:16px minmax(0,1fr);justify-items:start}.wc-nav-item>svg:last-child{display:none}.wc-dashboard-links{grid-template-columns:1fr}.wc-address-cards{grid-template-columns:1fr}}
+@media (max-width:700px){body[data-page="account"]{font-size:15px}.wc-auth-grid{grid-template-columns:1fr}.wc-form-two{grid-template-columns:1fr}.wc-account-nav nav{grid-template-columns:1fr}.wc-account-user{padding:14px}.wc-panel-head{align-items:flex-start}.wc-table th,.wc-table td{padding:11px}.wc-edit-address{padding:15px}.wc-address-cards article{min-height:0}}
