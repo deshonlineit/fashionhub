@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $payload = json_decode((string) file_get_contents('php://input'), true);
 if (!is_array($payload)) $payload = [];
 
+$source = (string)($payload['source'] ?? 'checkout');
 $firstName = trim((string)($payload['first_name'] ?? ''));
 $lastName = trim((string)($payload['last_name'] ?? ''));
 $email = strtolower(trim((string)($payload['email'] ?? '')));
@@ -23,9 +24,11 @@ $district = trim((string)($payload['district'] ?? ''));
 $postcode = trim((string)($payload['postcode'] ?? ''));
 $password = (string)($payload['password'] ?? '');
 
-if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $phone === '' || $address === '' || $district === '') {
+$identityValid = $firstName !== '' && $lastName !== '' && filter_var($email, FILTER_VALIDATE_EMAIL);
+$checkoutAddressValid = $phone !== '' && $address !== '' && $district !== '';
+if (!$identityValid || ($source !== 'account' && !$checkoutAddressValid)) {
     http_response_code(422);
-    echo json_encode(['ok' => false, 'message' => 'Complete all required customer fields']);
+    echo json_encode(['ok' => false, 'message' => $source === 'account' ? 'Complete your name and a valid email address' : 'Complete all required customer fields']);
     exit;
 }
 if (strlen($password) < 6) {
