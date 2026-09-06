@@ -1,0 +1,42 @@
+/* Category mega menu hover ownership fix.
+ * Only the direct parent link activates the right-side child panel.
+ * Hovering descendants must never activate a different parent branch.
+ */
+@media (min-width:981px){
+  /* Cancel the old li:hover/focus-within rule for the FIRST category level only. */
+  .category-mega>ul>li:hover>ul,
+  .category-mega>ul>li:focus-within>ul{
+    opacity:0!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+    transform:translateX(-10px) scale(.99)!important;
+  }
+
+  /* JS adds this class only after the direct parent <a> has been intentionally hovered/focused. */
+  .category-mega>ul>li.mega-parent-active>ul{
+    opacity:1!important;
+    visibility:visible!important;
+    pointer-events:auto!important;
+    transform:translateX(0) scale(1)!important;
+    transition-delay:0s!important;
+  }
+
+  .category-mega>ul>li>a:hover,
+  .category-mega>ul>li>a:focus-visible,
+  .category-mega>ul>li.mega-parent-active>a{
+    background:var(--accent-soft)!important;
+    color:var(--accent-strong)!important;
+  }
+
+  /* The child panel owns its own hover state. Moving inside it cannot select another parent. */
+  .category-mega>ul>li.mega-parent-active>ul:hover{
+    opacity:1!important;
+    visibility:visible!important;
+    pointer-events:auto!important;
+  }
+
+  /* Secondary-page parent rail: make parent changes deliberate, not accidental. */
+  .category-mega__item{
+    transition:background-color .35s ease,color .35s ease,transform .45s cubic-bezier(.2,.7,.2,1)!important;
+  }
+}
