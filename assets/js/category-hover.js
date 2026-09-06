@@ -4,6 +4,7 @@
   const DESKTOP = '(min-width: 981px)';
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let readyObserver = null;
+  let resizeFrame = 0;
 
   const isDesktop = () => matchMedia(DESKTOP).matches;
   const isHomepage = () => !document.body.dataset.page && !!document.getElementById('heroSlider');
@@ -30,24 +31,63 @@
     }
     loadStylesheet('assets/css/sticky-header.css');
     loadStylesheet('assets/css/desktop-category-slider.css');
+    loadStylesheet('assets/css/premium.css');
+  }
+
+  function stripApplePartsInPlace(items) {
+    if (!Array.isArray(items)) return items;
+    for (let index = items.length - 1; index >= 0; index -= 1) {
+      if (String(items[index]?.label || '').trim().toUpperCase() === 'APPLE PARTS') items.splice(index, 1);
+    }
+    return items;
   }
 
   function removeRedundantAppleParts() {
-    const strip = items => Array.isArray(items)
-      ? items.filter(item => String(item?.label || '').trim().toUpperCase() !== 'APPLE PARTS')
-      : items;
-
-    if (Array.isArray(window.FASHIONHUB_CATEGORY_TREE)) {
-      window.FASHIONHUB_CATEGORY_TREE = strip(window.FASHIONHUB_CATEGORY_TREE);
-    }
-    if (window.FASHIONHUB_DATA && Array.isArray(window.FASHIONHUB_DATA.categoryTree)) {
-      window.FASHIONHUB_DATA.categoryTree = strip(window.FASHIONHUB_DATA.categoryTree);
-    }
+    stripApplePartsInPlace(window.FASHIONHUB_CATEGORY_TREE);
+    stripApplePartsInPlace(window.FASHIONHUB_DATA?.categoryTree);
   }
 
   function categoryTree() {
     removeRedundantAppleParts();
     return window.FASHIONHUB_CATEGORY_TREE || window.FASHIONHUB_DATA?.categoryTree || [];
+  }
+
+  function setupStickyState(navWrap) {
+    if (!navWrap || navWrap.dataset.stickyBound === '1') return;
+
+    let sentinel = navWrap.previousElementSibling;
+    if (!sentinel?.classList?.contains('nav-sticky-sentinel')) {
+      sentinel = document.createElement('div');
+      sentinel.className = 'nav-sticky-sentinel';
+      sentinel.setAttribute('aria-hidden', 'true');
+      navWrap.before(sentinel);
+    }
+
+    let spacer = navWrap.nextElementSibling;
+    if (!spacer?.classList?.contains('nav-sticky-spacer')) {
+      spacer = document.createElement('div');
+      spacer.className = 'nav-sticky-spacer';
+      spacer.setAttribute('aria-hidden', 'true');
+      navWrap.after(spacer);
+    }
+
+    const apply = stuck => {
+      navWrap.classList.toggle('is-stuck', stuck);
+      spacer.classList.toggle('is-active', stuck);
+    };
+
+    if ('IntersectionObserver' in window) {
+      const stickyObserver = new IntersectionObserver(entries => {
+        const entry = entries[0];
+        apply(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      }, { threshold: 0 });
+      stickyObserver.observe(sentinel);
+    } else {
+      const top = sentinel.getBoundingClientRect().top + scrollY;
+      addEventListener('scroll', () => apply(scrollY >= top), { passive: true });
+    }
+
+    navWrap.dataset.stickyBound = '1';
   }
 
   function restructureDesktopNav() {
@@ -60,25 +100,14 @@
     const categoryMenu = document.getElementById('desktopCategoryMenu');
 
     if (!header || !navWrap || !nav || !launcher || !categoryMenu) return;
-    if (navWrap.dataset.desktopStructured === '1') return;
 
-    nav.prepend(launcher);
-    header.insertAdjacentElement('afterend', navWrap);
-
-    if (!navWrap.previousElementSibling?.classList?.contains('nav-sticky-sentinel')) {
-      const sentinel = document.createElement('div');
-      sentinel.className = 'nav-sticky-sentinel';
-      sentinel.setAttribute('aria-hidden', 'true');
-      navWrap.before(sentinel);
-
-      const stickyObserver = new IntersectionObserver(entries => {
-        const entry = entries[0];
-        navWrap.classList.toggle('is-stuck', !entry.isIntersecting && entry.boundingClientRect.top < 0);
-      }, { threshold: 0 });
-      stickyObserver.observe(sentinel);
+    if (navWrap.dataset.desktopStructured !== '1') {
+      nav.prepend(launcher);
+      header.insertAdjacentElement('afterend', navWrap);
+      navWrap.dataset.desktopStructured = '1';
     }
 
-    navWrap.dataset.desktopStructured = '1';
+    setupStickyState(navWrap);
   }
 
   function countLeaves(node) {
@@ -234,6 +263,20 @@
       renderGroups(Number(parent.dataset.fhCatIndex));
     });
 
+    rail.addEventListener('keydown', event => {
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+      const buttons = [...rail.querySelectorAll('.fh-cat-parent')];
+      if (!buttons.length) return;
+      const current = Math.max(0, buttons.indexOf(document.activeElement));
+      let next = current;
+      if (event.key === 'ArrowDown') next = (current + 1) % buttons.length;
+      if (event.key === 'ArrowUp') next = (current - 1 + buttons.length) % buttons.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = buttons.length - 1;
+      event.preventDefault();
+      buttons[next].focus();
+    });
+
     groupsPage.addEventListener('click', event => {
       const group = event.target.closest('[data-fh-group-index]');
       if (group) renderModels(Number(group.dataset.fhGroupIndex));
@@ -278,15 +321,12 @@
     document.addEventListener('click', event => {
       const toggle = event.target.closest('[data-action="toggle-categories"]');
       if (!toggle) return;
-      requestAnimationFrame(() => {
-        const menu = document.getElementById('desktopCategoryMenu');
-        if (menu) positionSlider(menu);
-      });
+      requestAnimationFrame(() => positionSlider(document.getElementById('desktopCategoryMenu')));
     });
   }
 
   function setupScrollReveal() {
-    if (reduceMotion.matches) return;
+    if (reduceMotion.matches || !('IntersectionObserver' in window)) return;
     document.documentElement.classList.add('motion-ready');
 
     const selector = [
@@ -301,45 +341,52 @@
         entry.target.classList.add('is-revealed');
         io.unobserve(entry.target);
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    }, { threshold: 0.08, rootMargin: '0px 0px -4% 0px' });
+
+    const shouldReveal = element => {
+      const rect = element.getBoundingClientRect();
+      return rect.top > innerHeight * 0.86;
+    };
 
     const mark = root => {
-      root.querySelectorAll?.(selector).forEach((el, index) => {
-        if (el.classList.contains('scroll-reveal')) return;
-        el.classList.add('scroll-reveal');
-        el.style.setProperty('--reveal-delay', `${Math.min(index % 5, 4) * 55}ms`);
-        io.observe(el);
+      root.querySelectorAll?.(selector).forEach((element, index) => {
+        if (element.classList.contains('scroll-reveal') || !shouldReveal(element)) return;
+        element.classList.add('scroll-reveal');
+        element.style.setProperty('--reveal-delay', `${Math.min(index % 4, 3) * 45}ms`);
+        io.observe(element);
       });
     };
 
-    mark(document);
-    const main = document.querySelector('main');
-    if (main) {
-      const mo = new MutationObserver(records => {
+    requestAnimationFrame(() => {
+      mark(document);
+      const main = document.querySelector('main');
+      if (!main) return;
+      const mutationObserver = new MutationObserver(records => {
         records.forEach(record => record.addedNodes.forEach(node => {
           if (node.nodeType !== 1) return;
-          if (node.matches?.(selector)) {
+          if (node.matches?.(selector) && shouldReveal(node)) {
             node.classList.add('scroll-reveal');
             io.observe(node);
           }
           mark(node);
         }));
       });
-      mo.observe(main, { childList: true, subtree: true });
-    }
+      mutationObserver.observe(main, { childList: true, subtree: true });
+      setTimeout(() => mutationObserver.disconnect(), 3000);
+    });
   }
 
   function observeLateMenus() {
     if (document.documentElement.dataset.menuCleanupObserver === '1') return;
     document.documentElement.dataset.menuCleanupObserver = '1';
-    const mo = new MutationObserver(records => {
+    const observer = new MutationObserver(records => {
       const meaningful = records.some(record => [...record.addedNodes].some(node => node.nodeType === 1));
       if (!meaningful) return;
       removeRedundantAppleParts();
       if (homepageReady()) buildDesktopCategorySlider();
     });
-    mo.observe(document.body, { childList: true, subtree: true });
-    window.setTimeout(() => mo.disconnect(), 7000);
+    observer.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => observer.disconnect(), 2500);
   }
 
   function finishMenuSetup() {
@@ -368,14 +415,18 @@
     ensureAssets();
     removeRedundantAppleParts();
     bindOutsideClose();
-    setupScrollReveal();
     observeLateMenus();
     waitForHomepageReady();
+    setupScrollReveal();
+    document.documentElement.classList.add('ui-ready');
 
     addEventListener('resize', () => {
-      if (!homepageReady() || !isDesktop()) return;
-      restructureDesktopNav();
-      positionSlider(document.getElementById('desktopCategoryMenu'));
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        if (!homepageReady() || !isDesktop()) return;
+        restructureDesktopNav();
+        positionSlider(document.getElementById('desktopCategoryMenu'));
+      });
     }, { passive: true });
   }
 
