@@ -343,11 +343,248 @@
     return true;
   }
 
+  function markLoopClone(node) {
+    node.dataset.loopClone = '1';
+    node.setAttribute('aria-hidden', 'true');
+    node.querySelectorAll('a,button,input,select,textarea,[tabindex]').forEach(control => control.setAttribute('tabindex', '-1'));
+    return node;
+  }
+
+  function setupCategoryRailLoop(rail) {
+    if (!rail || rail._fashionHubMove) return;
+    rail.dataset.infiniteReady = '1';
+
+    const cycleWidth = () => Math.max(0, rail.scrollWidth / 2);
+    const normalize = () => {
+      const cycle = cycleWidth();
+      if (!cycle) return;
+      if (rail.scrollLeft >= cycle) rail.scrollLeft -= cycle;
+      if (rail.scrollLeft < 0) rail.scrollLeft += cycle;
+    };
+    const stepSize = () => {
+      const card = rail.querySelector('.category-card');
+      if (!card) return Math.max(180, rail.clientWidth * .65);
+      const style = getComputedStyle(rail);
+      const gap = parseFloat(style.columnGap || style.gap || 0) || 0;
+      const item = card.getBoundingClientRect().width + gap;
+      const visible = Math.max(1, Math.floor((rail.clientWidth + gap) / Math.max(1, item)));
+      return item * Math.max(1, visible - 1);
+    };
+    rail._fashionHubMove = direction => {
+      const cycle = cycleWidth();
+      const step = stepSize();
+      if (cycle) {
+        if (direction < 0 && rail.scrollLeft < step * .8) rail.scrollLeft += cycle;
+        if (direction > 0 && rail.scrollLeft > cycle - step * .8) rail.scrollLeft -= cycle;
+      }
+      rail.scrollBy({ left:direction * step, behavior:reduceMotion.matches ? 'auto' : 'smooth' });
+      setTimeout(normalize, reduceMotion.matches ? 40 : 620);
+    };
+    rail._fashionHubRecenter = normalize;
+    rail.addEventListener('scroll', () => {
+      clearTimeout(rail._fhCategoryNormalizeTimer);
+      rail._fhCategoryNormalizeTimer = setTimeout(normalize, 120);
+    }, { passive:true });
+  }
+
+  function setupFallbackInfiniteRail(rail) {
+    if (!rail || rail._fashionHubMove || rail.dataset.infiniteReady === '1' || rail.classList.contains('is-grid')) return;
+    if (rail.id === 'categoryRail') {
+      setupCategoryRailLoop(rail);
+      return;
+    }
+
+    const originals = [...rail.children].filter(node => node.nodeType === 1 && node.dataset.loopClone !== '1');
+    if (originals.length < 2) return;
+
+    const before = document.createDocumentFragment();
+    const after = document.createDocumentFragment();
+    originals.forEach(node => before.appendChild(markLoopClone(node.cloneNode(true))));
+    originals.forEach(node => after.appendChild(markLoopClone(node.cloneNode(true))));
+    rail.prepend(before);
+    rail.append(after);
+    rail.dataset.infiniteReady = '1';
+
+    let cycleWidth = 0;
+    let middleStart = 0;
+    let afterStart = 0;
+    let scrollTimer = 0;
+    let autoTimer = 0;
+    let paused = false;
+    let moving = false;
+
+    const measure = () => {
+      const children = [...rail.children];
+      const count = originals.length;
+      const middleFirst = children[count];
+      const afterFirst = children[count * 2];
+      if (!middleFirst || !afterFirst) return false;
+      middleStart = middleFirst.offsetLeft;
+      afterStart = afterFirst.offsetLeft;
+      cycleWidth = afterStart - middleStart;
+      return cycleWidth > 0;
+    };
+    const center = () => {
+      if (!measure()) return;
+      rail.scrollLeft = middleStart;
+    };
+    const normalize = () => {
+      if (!cycleWidth && !measure()) return;
+      const first = rail.querySelector('.product-card,.review-card,.category-card,.campaign-card,.blog-card');
+      const buffer = Math.max(24, (first?.getBoundingClientRect().width || 80) * .45);
+      if (rail.scrollLeft < middleStart - buffer) rail.scrollLeft += cycleWidth;
+      else if (rail.scrollLeft >= afterStart - buffer) rail.scrollLeft -= cycleWidth;
+    };
+    const stepSize = () => {
+      const first = rail.querySelector('.product-card,.review-card,.category-card,.campaign-card,.blog-card') || originals[0];
+      const style = getComputedStyle(rail);
+      const gap = parseFloat(style.columnGap || style.gap || 0) || 0;
+      const item = (first?.getBoundingClientRect().width || Math.max(180, rail.clientWidth * .5)) + gap;
+      const visible = Math.max(1, Math.floor((rail.clientWidth + gap) / Math.max(1, item)));
+      return item * Math.max(1, visible - 1);
+    };
+    const move = direction => {
+      if (rail.classList.contains('is-grid')) return;
+      moving = true;
+      rail.scrollBy({ left:direction * stepSize(), behavior:reduceMotion.matches ? 'auto' : 'smooth' });
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        moving = false;
+        normalize();
+      }, reduceMotion.matches ? 40 : 620);
+    };
+
+    rail._fashionHubMove = move;
+    rail._fashionHubRecenter = () => requestAnimationFrame(center);
+    rail.addEventListener('mouseenter', () => { paused = true; }, { passive:true });
+    rail.addEventListener('mouseleave', () => { paused = false; }, { passive:true });
+    rail.addEventListener('focusin', () => { paused = true; });
+    rail.addEventListener('focusout', () => { paused = false; });
+    rail.addEventListener('pointerdown', () => { paused = true; }, { passive:true });
+    rail.addEventListener('pointerup', () => { paused = false; }, { passive:true });
+    rail.addEventListener('pointercancel', () => { paused = false; }, { passive:true });
+    rail.addEventListener('scroll', () => {
+      if (moving) return;
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(normalize, 110);
+    }, { passive:true });
+
+    requestAnimationFrame(() => requestAnimationFrame(center));
+    if (!reduceMotion.matches) {
+      autoTimer = setInterval(() => {
+        if (!rail.isConnected) return clearInterval(autoTimer);
+        if (!paused && !document.hidden && !rail.classList.contains('is-grid')) move(1);
+      }, 5200);
+    }
+  }
+
+  function setupInfiniteHero() {
+    const track = document.getElementById('heroSlides');
+    if (!track || track.dataset.fhInfiniteHero === '1') return;
+    const originals = [...track.children].filter(node => node.classList?.contains('hero-slide') && node.dataset.loopClone !== '1');
+    const count = originals.length;
+    if (count < 2) return;
+
+    const leading = markLoopClone(originals[count - 1].cloneNode(true));
+    const trailing = markLoopClone(originals[0].cloneNode(true));
+    leading.classList.add('fh-hero-clone');
+    trailing.classList.add('fh-hero-clone');
+    track.prepend(leading);
+    track.append(trailing);
+    track.dataset.fhInfiniteHero = '1';
+
+    let logicalIndex = 0;
+    let pendingJump = null;
+
+    const setA11y = index => {
+      leading.setAttribute('aria-hidden', 'true');
+      trailing.setAttribute('aria-hidden', 'true');
+      originals.forEach((slide, slideIndex) => slide.setAttribute('aria-hidden', String(slideIndex !== index)));
+    };
+
+    const writePosition = (position, instant = false) => {
+      track.dataset.fhHeroInternal = '1';
+      const previousTransition = track.style.transition;
+      if (instant) track.style.transition = 'none';
+      track.style.transform = `translate3d(-${position * 100}%,0,0)`;
+      if (instant) {
+        void track.offsetWidth;
+        track.style.transition = previousTransition;
+      }
+      requestAnimationFrame(() => { delete track.dataset.fhHeroInternal; });
+    };
+
+    writePosition(1, true);
+    setA11y(0);
+
+    const observer = new MutationObserver(() => {
+      if (track.dataset.fhHeroInternal === '1') return;
+      const match = String(track.style.transform || '').match(/translate3d\(-?([0-9.]+)%,\s*0(?:px)?,\s*0(?:px)?\)/i);
+      if (!match) return;
+      const target = Math.round(Number(match[1]) / 100) % count;
+      if (!Number.isFinite(target)) return;
+
+      pendingJump = null;
+      let visualPosition = target + 1;
+      if (!reduceMotion.matches && logicalIndex === count - 1 && target === 0) {
+        visualPosition = count + 1;
+        pendingJump = 1;
+      } else if (!reduceMotion.matches && logicalIndex === 0 && target === count - 1) {
+        visualPosition = 0;
+        pendingJump = count;
+      }
+
+      logicalIndex = target;
+      setA11y(target);
+      writePosition(visualPosition, reduceMotion.matches);
+    });
+    observer.observe(track, { attributes:true, attributeFilter:['style'] });
+
+    track.addEventListener('transitionend', event => {
+      if (event.target !== track || event.propertyName !== 'transform' || pendingJump == null) return;
+      const jump = pendingJump;
+      pendingJump = null;
+      writePosition(jump, true);
+    });
+  }
+
+  function setupInfiniteSliders() {
+    const run = () => {
+      setupInfiniteHero();
+      document.querySelectorAll('.rail').forEach(setupFallbackInfiniteRail);
+    };
+
+    const isHomepage = !!document.getElementById('heroSlider');
+    if (!isHomepage || document.documentElement.classList.contains('is-ready')) {
+      run();
+    } else {
+      const readyObserver = new MutationObserver(() => {
+        if (!document.documentElement.classList.contains('is-ready')) return;
+        readyObserver.disconnect();
+        run();
+      });
+      readyObserver.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
+    }
+
+    const lateObserver = new MutationObserver(records => {
+      let found = false;
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node.nodeType !== 1) continue;
+          if (node.matches?.('.rail,#heroSlides') || node.querySelector?.('.rail,#heroSlides')) found = true;
+        }
+      }
+      if (found) requestAnimationFrame(run);
+    });
+    lateObserver.observe(document.body, { childList:true, subtree:true });
+  }
+
   function bind() {
     normalizeProductLinks();
     normalizeCleanUrls();
     syncAddButtons();
     bindStickyState();
+    setupInfiniteSliders();
 
     document.addEventListener('submit', event => { handleSearchSubmit(event); }, true);
 
