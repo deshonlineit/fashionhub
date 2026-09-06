@@ -6,4 +6,6 @@
 .checkout-logout-btn{min-height:34px;padding:0 11px;border:1px solid #e1e4ea;border-radius:9px;background:#fff;color:#5e6370;font-size:9.5px;font-weight:850;cursor:pointer}.checkout-logout-btn:hover{border-color:#ffcbd9;background:#fff4f7;color:var(--accent-strong)}
 .checkout-password-grid{margin-top:12px}
 .checkout-field label small{color:#999da8;font-size:9px;font-weight:500}
+/* Validation controls availability but does not paint every untouched field red on first load. */
+.checkout-field.has-error input,.checkout-field.has-error select{border-color:#dfe2e8!important;background:#fff!important}
 @media(max-width:560px){.checkout-signed-in{grid-template-columns:38px minmax(0,1fr)}.checkout-signed-avatar{width:38px;height:38px}.checkout-logout-btn{grid-column:1/-1;width:100%}}
