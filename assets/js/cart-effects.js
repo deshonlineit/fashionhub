@@ -21,13 +21,9 @@
     return Number(readCart()[id] || 0);
   }
 
-  function isCardButton(button) {
-    return button.classList.contains('add-button') || !!button.closest('.product-card,.digital-card');
-  }
-
   function renderButton(button, added) {
     if (!button || !button.matches(addSelector)) return;
-    const cardButton = isCardButton(button);
+    button.classList.add('fh-add-cart');
     button.classList.remove('is-adding');
     button.classList.toggle('is-added', added);
     button.disabled = added;
@@ -39,20 +35,20 @@
       return;
     }
 
-    if (cardButton) {
-      button.innerHTML = `${svg('cart')}<span>Add to cart</span>`;
-      button.setAttribute('aria-label', 'Add product to cart');
-    }
+    button.innerHTML = `${svg('cart')}<span>Add to cart</span>`;
+    button.setAttribute('aria-label', 'Add product to cart');
   }
 
   function markAdding(id) {
     pending.add(String(id));
     document.querySelectorAll(addSelector).forEach(button => {
       if (String(button.dataset.productId) !== String(id)) return;
+      button.classList.add('fh-add-cart');
       button.classList.remove('is-added');
       button.classList.add('is-adding');
       button.disabled = true;
       button.setAttribute('aria-disabled', 'true');
+      button.setAttribute('aria-label', 'Adding product to cart');
       button.innerHTML = `${svg('cart')}<span>Adding…</span>`;
     });
   }
@@ -250,7 +246,8 @@
     if (!drawer || drawer.classList.contains('is-open')) return;
 
     const modal = document.getElementById('quickViewModal');
-    if (modal?.classList.contains('is-open')) {
+    const wasModalOpen = !!modal?.classList.contains('is-open');
+    if (wasModalOpen) {
       const close = modal.querySelector('[data-action="close-modal"]');
       close?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
     }
@@ -265,7 +262,7 @@
       opener.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
       drawer.classList.add('fh-cart-arrive');
       setTimeout(() => drawer.classList.remove('fh-cart-arrive'), 700);
-    }, modal?.classList.contains('is-open') ? 180 : 0);
+    }, wasModalOpen ? 180 : 0);
   }
 
   function afterCartChange(delay = 60) {
@@ -283,14 +280,9 @@
     const target = cartTarget();
     markAdding(id);
 
-    const flight = flyBetween(image, target, 'to-cart');
-    setTimeout(() => {
+    flyBetween(image, target, 'to-cart').then(() => {
       pending.delete(id);
       syncButtons();
-      syncStickyCount();
-    }, 430);
-
-    flight.then(() => {
       syncStickyCount();
       setTimeout(openMiniCart, 260);
     });
