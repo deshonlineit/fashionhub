@@ -2,11 +2,14 @@
   'use strict';
 
   const CART_KEY = 'fashionhub-demo-cart-v2';
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const addSelector = '[data-action="add-cart"][data-product-id],[data-action="add-product"][data-product-id]';
-  const cartMutationSelector = '[data-action="cart-remove"],[data-action="cart-minus"],[data-action="cart-plus"]';
+  const returnSelector = '[data-action="cart-remove"],[data-action="cart-minus"],[data-action="cart-decrease"]';
+  const cartChangeSelector = '[data-action="cart-remove"],[data-action="cart-minus"],[data-action="cart-decrease"],[data-action="cart-plus"],[data-action="cart-increase"]';
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const pendingAdds = new Set();
+  let returnSnapshot = null;
+
   const svg = name => `<svg aria-hidden="true"><use href="#i-${name}"></use></svg>`;
-  const pending = new Set();
 
   function readCart() {
     try {
@@ -17,51 +20,55 @@
     }
   }
 
-  function cartQuantity(id) {
-    return Number(readCart()[id] || 0);
+  function cartQty(id) {
+    return Number(readCart()[String(id)] || 0);
   }
 
-  function renderButton(button, added) {
-    if (!button || !button.matches(addSelector)) return;
+  function productUrl(id) {
+    return `product.html?id=${encodeURIComponent(String(id || ''))}`;
+  }
+
+  function isVisible(element) {
+    if (!element) return false;
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) > 0;
+  }
+
+  function renderAddButton(button, added) {
+    if (!button?.matches(addSelector)) return;
     button.classList.add('fh-add-cart');
     button.classList.remove('is-adding');
     button.classList.toggle('is-added', added);
     button.disabled = added;
     button.setAttribute('aria-disabled', String(added));
-
-    if (added) {
-      button.innerHTML = `${svg('check')}<span>Added</span>`;
-      button.setAttribute('aria-label', 'Product added to cart');
-      return;
-    }
-
-    button.innerHTML = `${svg('cart')}<span>Add to cart</span>`;
-    button.setAttribute('aria-label', 'Add product to cart');
+    button.innerHTML = added
+      ? `${svg('check')}<span>Added</span>`
+      : `${svg('cart')}<span>Add to cart</span>`;
+    button.setAttribute('aria-label', added ? 'Product added to cart' : 'Add product to cart');
   }
 
   function markAdding(id) {
-    pending.add(String(id));
+    pendingAdds.add(String(id));
     document.querySelectorAll(addSelector).forEach(button => {
       if (String(button.dataset.productId) !== String(id)) return;
-      button.classList.add('fh-add-cart');
+      button.classList.add('fh-add-cart', 'is-adding');
       button.classList.remove('is-added');
-      button.classList.add('is-adding');
       button.disabled = true;
       button.setAttribute('aria-disabled', 'true');
-      button.setAttribute('aria-label', 'Adding product to cart');
       button.innerHTML = `${svg('cart')}<span>Adding…</span>`;
     });
   }
 
-  function syncButtons(root = document) {
+  function syncAddButtons(root = document) {
     const cart = readCart();
     const buttons = [];
     if (root.matches?.(addSelector)) buttons.push(root);
     root.querySelectorAll?.(addSelector).forEach(button => buttons.push(button));
     buttons.forEach(button => {
-      const id = String(button.dataset.productId);
-      if (pending.has(id)) return;
-      renderButton(button, Number(cart[id] || 0) > 0);
+      const id = String(button.dataset.productId || '');
+      if (!id || pendingAdds.has(id)) return;
+      renderAddButton(button, Number(cart[id] || 0) > 0);
     });
   }
 
@@ -71,331 +78,234 @@
     if (root.matches?.(selector)) links.push(root);
     root.querySelectorAll?.(selector).forEach(link => links.push(link));
     links.forEach(link => {
-      const id = String(link.dataset.productId || '');
+      const id = link.dataset.productId;
       if (!id) return;
-      link.href = `product.html?id=${encodeURIComponent(id)}`;
+      link.href = productUrl(id);
       link.removeAttribute('data-action');
-      link.setAttribute('aria-label', `View ${link.textContent.trim() || 'product'} details`);
+      link.dataset.productLink = 'true';
     });
   }
 
   function sourceImage(button) {
-    const scopes = [
-      button.closest('.product-card'),
-      button.closest('.digital-card'),
-      button.closest('.quick-view'),
-      button.closest('.product-layout'),
-      button.closest('.product-summary')?.parentElement
-    ].filter(Boolean);
-    for (const scope of scopes) {
-      const image = scope.querySelector('.product-card__media img,.quick-view__image img,.product-main-image img,img');
-      if (image) return image;
-    }
-    return null;
-  }
-
-  function visibleScore(element) {
-    if (!element) return -1;
-    const rect = element.getBoundingClientRect();
-    if (!rect.width || !rect.height) return -1;
-    const width = Math.max(0, Math.min(innerWidth, rect.right) - Math.max(0, rect.left));
-    const height = Math.max(0, Math.min(innerHeight, rect.bottom) - Math.max(0, rect.top));
-    return width * height;
-  }
-
-  function productTarget(id) {
-    const images = [];
-    document.querySelectorAll(addSelector).forEach(button => {
-      if (String(button.dataset.productId) !== String(id) || button.closest('.cart-drawer')) return;
-      const image = sourceImage(button);
-      if (image && !images.includes(image)) images.push(image);
-    });
-    images.sort((a, b) => visibleScore(b) - visibleScore(a));
-    return images.find(image => visibleScore(image) > 0) || images[0] || null;
-  }
-
-  function isRenderable(element) {
-    if (!element) return false;
-    const rect = element.getBoundingClientRect();
-    const style = getComputedStyle(element);
-    return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity || 1) > 0;
+    const scope = button.closest('.product-card,.digital-card,.quick-view,.product-layout,.product-summary') || document;
+    return scope.querySelector('.product-card__media img,.digital-card img,.quick-view__image img,.product-main-image img,img');
   }
 
   function cartTarget() {
-    const sticky = document.querySelector('.primary-nav-wrap.is-stuck .fh-sticky-cart-action');
-    if (isRenderable(sticky)) return sticky.querySelector('.fh-sticky-action-icon') || sticky;
-
+    const sticky = document.querySelector('body.fh-nav-stuck .header-actions [data-action="open-cart"]');
+    if (isVisible(sticky)) return sticky.querySelector('.action-icon') || sticky;
     const candidates = [...document.querySelectorAll('[data-action="open-cart"]')]
-      .filter(button => !button.closest('.cart-drawer') && isRenderable(button));
-    const best = candidates.sort((a, b) => visibleScore(b) - visibleScore(a))[0];
-    return best?.querySelector('.action-icon,.fh-sticky-action-icon') || best || null;
+      .filter(button => !button.closest('.cart-drawer') && isVisible(button));
+    const best = candidates.sort((a, b) => {
+      const ar = a.getBoundingClientRect();
+      const br = b.getBoundingClientRect();
+      return (br.width * br.height) - (ar.width * ar.height);
+    })[0];
+    return best?.querySelector('.action-icon') || best || null;
   }
 
-  function pulseCart(target) {
-    if (!target) return;
-    target.classList.remove('fh-cart-hit');
-    void target.offsetWidth;
-    target.classList.add('fh-cart-hit');
-    setTimeout(() => target.classList.remove('fh-cart-hit'), 860);
+  function productTarget(id) {
+    const candidates = [];
+    document.querySelectorAll(`.product-card[data-product-id="${CSS.escape(String(id))}"],.digital-card[data-product-id="${CSS.escape(String(id))}"]`).forEach(card => {
+      const image = card.querySelector('.product-card__media img,.digital-card img,img');
+      if (image) candidates.push(image);
+    });
+    const productPageImage = document.querySelector('body[data-page="product"] .product-main-image img');
+    const productPageButton = document.querySelector(`body[data-page="product"] ${addSelector}`);
+    if (productPageImage && String(productPageButton?.dataset.productId || '') === String(id)) candidates.push(productPageImage);
+    return candidates.find(isVisible) || candidates[0] || null;
   }
 
-  function pulseProduct(target) {
-    const card = target?.closest?.('.product-card,.digital-card,.product-layout') || target;
-    if (!card) return;
-    card.classList.remove('fh-product-return-hit');
-    void card.offsetWidth;
-    card.classList.add('fh-product-return-hit');
-    setTimeout(() => card.classList.remove('fh-product-return-hit'), 980);
+  function pulse(element, className) {
+    if (!element) return;
+    element.classList.remove(className);
+    void element.offsetWidth;
+    element.classList.add(className);
+    setTimeout(() => element.classList.remove(className), 900);
   }
 
-  function flyBetween(sourceElement, destinationElement, direction = 'to-cart') {
+  function flyImage(source, destination, { reverse = false, snapshot = null } = {}) {
     return new Promise(resolve => {
-      if (!sourceElement || !destinationElement || reduceMotion.matches) {
-        if (direction === 'to-cart') pulseCart(destinationElement);
-        else pulseProduct(destinationElement);
+      if ((!source && !snapshot) || !destination || reduceMotion.matches) {
+        pulse(destination, reverse ? 'fh-product-return-hit' : 'fh-cart-hit');
         resolve();
         return;
       }
 
-      const source = sourceElement.getBoundingClientRect();
-      const destination = destinationElement.getBoundingClientRect();
-      if (!source.width || !source.height || !destination.width || !destination.height) {
+      const start = snapshot?.rect || source.getBoundingClientRect();
+      const end = destination.getBoundingClientRect();
+      if (!start.width || !start.height || !end.width || !end.height) {
         resolve();
         return;
       }
 
-      const size = Math.max(54, Math.min(90, source.width, source.height));
-      const startX = source.left + source.width / 2 - size / 2;
-      const startY = source.top + source.height / 2 - size / 2;
-      const endX = destination.left + destination.width / 2 - size / 2;
-      const endY = destination.top + destination.height / 2 - size / 2;
+      const size = Math.max(56, Math.min(92, start.width, start.height));
+      const startX = start.left + start.width / 2 - size / 2;
+      const startY = start.top + start.height / 2 - size / 2;
+      const endX = end.left + end.width / 2 - size / 2;
+      const endY = end.top + end.height / 2 - size / 2;
       const dx = endX - startX;
       const dy = endY - startY;
-      const reverse = direction === 'to-product';
-
-      const flyer = sourceElement.cloneNode(false);
+      const flyer = document.createElement('img');
       flyer.className = `fh-cart-fly${reverse ? ' fh-cart-fly--return' : ''}`;
-      flyer.removeAttribute('id');
+      flyer.src = snapshot?.src || source.currentSrc || source.src;
+      flyer.alt = '';
       flyer.setAttribute('aria-hidden', 'true');
       Object.assign(flyer.style, {
-        left: `${startX}px`,
-        top: `${startY}px`,
-        width: `${size}px`,
-        height: `${size}px`
+        left: `${startX}px`, top: `${startY}px`, width: `${size}px`, height: `${size}px`
       });
       document.body.appendChild(flyer);
 
-      const duration = reverse ? 1200 : 1500;
-      const arc = reverse ? -42 : -88;
+      const duration = reverse ? 1250 : 1650;
+      const arc = reverse ? -40 : -96;
       const animation = flyer.animate([
-        { transform: 'translate3d(0,0,0) scale(1) rotate(0deg)', opacity: 1 },
-        { transform: `translate3d(${dx * .28}px,${dy * .18 + arc}px,0) scale(${reverse ? .94 : .9}) rotate(${reverse ? '2deg' : '-3deg'})`, opacity: 1, offset: .28 },
-        { transform: `translate3d(${dx * .68}px,${dy * .62 + arc * .36}px,0) scale(${reverse ? .8 : .58}) rotate(${reverse ? '-2deg' : '2deg'})`, opacity: .94, offset: .7 },
-        { transform: `translate3d(${dx}px,${dy}px,0) scale(${reverse ? .62 : .13}) rotate(0deg)`, opacity: reverse ? .18 : .05 }
-      ], {
-        duration,
-        easing: 'cubic-bezier(.16,.76,.18,1)',
-        fill: 'forwards'
-      });
+        { transform: 'translate3d(0,0,0) scale(1)', opacity: 1 },
+        { transform: `translate3d(${dx * .26}px,${dy * .17 + arc}px,0) scale(.94)`, opacity: 1, offset: .28 },
+        { transform: `translate3d(${dx * .7}px,${dy * .64 + arc * .32}px,0) scale(${reverse ? .78 : .58})`, opacity: .96, offset: .72 },
+        { transform: `translate3d(${dx}px,${dy}px,0) scale(${reverse ? .55 : .12})`, opacity: reverse ? .24 : .06 }
+      ], { duration, easing: 'cubic-bezier(.16,.78,.18,1)', fill: 'forwards' });
 
       animation.finished.catch(() => {}).finally(() => {
         flyer.remove();
-        if (reverse) pulseProduct(destinationElement);
-        else pulseCart(destinationElement);
+        pulse(destination, reverse ? 'fh-product-return-hit' : 'fh-cart-hit');
         resolve();
       });
     });
   }
 
-  function syncStickyCount() {
-    const source = document.getElementById('cartCount');
-    const fallback = Object.values(readCart()).reduce((sum, value) => sum + Number(value || 0), 0);
-    const count = source?.textContent?.trim() || String(fallback);
-    document.querySelectorAll('.fh-sticky-cart-count').forEach(badge => {
-      badge.textContent = count;
-      badge.toggleAttribute('hidden', Number(count || 0) < 1);
+  function syncStickyState() {
+    const wrap = document.querySelector('.primary-nav-wrap');
+    const stuck = !!wrap?.classList.contains('is-stuck');
+    document.body.classList.toggle('fh-nav-stuck', stuck);
+    document.querySelectorAll('.fh-sticky-actions').forEach(node => node.remove());
+  }
+
+  function bindStickyState() {
+    const bind = () => {
+      const wrap = document.querySelector('.primary-nav-wrap');
+      if (!wrap || wrap.dataset.fhStickyStateBound === '1') return false;
+      wrap.dataset.fhStickyStateBound = '1';
+      syncStickyState();
+      new MutationObserver(syncStickyState).observe(wrap, { attributes: true, attributeFilter: ['class'] });
+      return true;
+    };
+    if (bind()) return;
+    const observer = new MutationObserver(() => {
+      if (bind()) observer.disconnect();
     });
-  }
-
-  function ensureStickyActions() {
-    const navWrap = document.querySelector('.primary-nav-wrap');
-    if (!navWrap) return false;
-    let actions = navWrap.querySelector(':scope > .fh-sticky-actions');
-    if (!actions) {
-      actions = document.createElement('div');
-      actions.className = 'fh-sticky-actions';
-      actions.setAttribute('aria-label', 'Sticky account and cart actions');
-      actions.innerHTML = `
-        <a class="fh-sticky-action fh-sticky-account-action" href="account.html" aria-label="Account" title="Account">${svg('user')}</a>
-        <button class="fh-sticky-action fh-sticky-cart-action" type="button" data-action="open-cart" aria-label="Open shopping cart" title="Cart">
-          <span class="fh-sticky-action-icon">${svg('cart')}<b class="fh-sticky-cart-count" hidden>0</b></span>
-        </button>`;
-      navWrap.appendChild(actions);
-    }
-    syncStickyCount();
-
-    const source = document.getElementById('cartCount');
-    if (source && source.dataset.stickyCountObserved !== '1') {
-      source.dataset.stickyCountObserved = '1';
-      new MutationObserver(syncStickyCount).observe(source, { childList: true, characterData: true, subtree: true });
-    }
-    return true;
-  }
-
-  function watchStickyActions() {
-    ensureStickyActions();
-    const observer = new MutationObserver(() => ensureStickyActions());
     observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => observer.disconnect(), 8000);
+    setTimeout(() => observer.disconnect(), 6000);
   }
 
   function openMiniCart() {
     const drawer = document.getElementById('cartDrawer');
     if (!drawer || drawer.classList.contains('is-open')) return;
-
-    const modal = document.getElementById('quickViewModal');
-    const wasModalOpen = !!modal?.classList.contains('is-open');
-    if (wasModalOpen) {
-      const close = modal.querySelector('[data-action="close-modal"]');
-      close?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-    }
-
-    const openers = [...document.querySelectorAll('[data-action="open-cart"]')]
-      .filter(button => !button.closest('.cart-drawer'));
-    const sticky = document.querySelector('.primary-nav-wrap.is-stuck .fh-sticky-cart-action');
-    const opener = isRenderable(sticky) ? sticky : openers.find(isRenderable) || openers[0];
+    const sticky = document.querySelector('body.fh-nav-stuck .header-actions [data-action="open-cart"]');
+    const opener = isVisible(sticky)
+      ? sticky
+      : [...document.querySelectorAll('[data-action="open-cart"]')].find(button => !button.closest('.cart-drawer') && isVisible(button));
     if (!opener) return;
-
-    setTimeout(() => {
-      opener.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-      drawer.classList.add('fh-cart-arrive');
-      setTimeout(() => drawer.classList.remove('fh-cart-arrive'), 900);
-    }, wasModalOpen ? 220 : 0);
+    opener.click();
+    drawer.classList.add('fh-cart-arrive');
+    setTimeout(() => drawer.classList.remove('fh-cart-arrive'), 950);
   }
 
-  function afterCartChange(delay = 90) {
-    setTimeout(() => {
-      syncButtons();
-      syncStickyCount();
-    }, delay);
-  }
-
-  function handleAdd(button) {
-    const id = String(button.dataset.productId || '');
-    if (!id || pending.has(id) || cartQuantity(id) > 0) return;
-
-    const image = sourceImage(button);
-    const target = cartTarget();
-    markAdding(id);
-
-    flyBetween(image, target, 'to-cart').then(() => {
-      setTimeout(() => {
-        pending.delete(id);
-        syncButtons();
-        syncStickyCount();
-        setTimeout(openMiniCart, 360);
-      }, 120);
-    });
-  }
-
-  function handleReturn(button) {
+  function prepareReturn(button) {
     const id = String(button.dataset.productId || '');
     if (!id) return;
-    const item = button.closest('.cart-item');
-    const source = item?.querySelector('img');
-    const destination = productTarget(id);
-    if (source && destination) flyBetween(source, destination, 'to-product');
-  }
-
-  function handleThumbnail(button) {
-    const gallery = button.closest('.product-gallery');
-    const thumbImage = button.querySelector('img');
-    const main = gallery?.querySelector('#productMainImg,.product-main-image img');
-    if (!gallery || !thumbImage || !main) return;
-    gallery.querySelectorAll('.product-thumb').forEach(thumb => thumb.classList.toggle('is-active', thumb === button));
-    main.src = thumbImage.currentSrc || thumbImage.src;
-    main.alt = thumbImage.alt || main.alt;
-    main.style.transform = thumbImage.style.transform || 'none';
-    main.classList.remove('is-changing');
-    void main.offsetWidth;
-    main.classList.add('is-changing');
-    setTimeout(() => main.classList.remove('is-changing'), 420);
-  }
-
-  function productPageUrl(id) {
-    return `product.html?id=${encodeURIComponent(String(id || ''))}`;
+    const action = button.dataset.action;
+    if (action !== 'cart-remove' && cartQty(id) > 1) return;
+    const image = button.closest('.cart-item')?.querySelector('img');
+    if (!image) return;
+    const rect = image.getBoundingClientRect();
+    returnSnapshot = {
+      id,
+      src: image.currentSrc || image.src,
+      rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+    };
   }
 
   function handleCardNavigation(event) {
-    const quickLink = event.target.closest('a[data-action="quick-view"][data-product-id]');
-    if (quickLink) {
-      const id = quickLink.dataset.productId;
-      if (!id) return false;
+    const quickButton = event.target.closest('button[data-action="quick-view"][data-product-id]');
+    if (quickButton) return false;
+
+    const oldQuickLink = event.target.closest('a[data-action="quick-view"][data-product-id]');
+    if (oldQuickLink) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      location.href = productPageUrl(id);
+      location.href = productUrl(oldQuickLink.dataset.productId);
       return true;
     }
 
     const card = event.target.closest('.product-card[data-product-id],.digital-card[data-product-id]');
-    if (!card || event.target.closest('a,button,input,select,textarea,label')) return false;
+    if (!card) return false;
+    const interactive = event.target.closest('button,input,select,textarea,label,a');
+    if (interactive) return false;
     event.preventDefault();
     event.stopImmediatePropagation();
-    location.href = productPageUrl(card.dataset.productId);
+    location.href = productUrl(card.dataset.productId);
     return true;
   }
 
   function bind() {
-    syncButtons();
+    syncAddButtons();
     normalizeProductLinks();
-    watchStickyActions();
+    bindStickyState();
 
     document.addEventListener('click', event => {
       if (handleCardNavigation(event)) return;
-
-      const thumb = event.target.closest('[data-action="thumb"]');
-      if (thumb) {
-        handleThumbnail(thumb);
-        return;
-      }
-
-      const addButton = event.target.closest(addSelector);
-      if (addButton && !addButton.disabled) {
-        handleAdd(addButton);
-        return;
-      }
-
-      const remove = event.target.closest('[data-action="cart-remove"]');
-      if (remove) {
-        handleReturn(remove);
-        afterCartChange(120);
-        return;
-      }
-
-      const decrease = event.target.closest('[data-action="cart-minus"]');
-      if (decrease && cartQuantity(decrease.dataset.productId) <= 1) handleReturn(decrease);
-      if (event.target.closest(cartMutationSelector)) afterCartChange(120);
+      const button = event.target.closest(returnSelector);
+      if (button) prepareReturn(button);
     }, true);
 
+    document.addEventListener('click', event => {
+      const addButton = event.target.closest(addSelector);
+      if (addButton) {
+        const id = String(addButton.dataset.productId || '');
+        if (id && !pendingAdds.has(id)) {
+          const image = sourceImage(addButton);
+          const target = cartTarget();
+          markAdding(id);
+          flyImage(image, target).then(() => {
+            setTimeout(() => {
+              pendingAdds.delete(id);
+              syncAddButtons();
+              setTimeout(openMiniCart, 320);
+            }, 140);
+          });
+        }
+      }
+
+      const cartChange = event.target.closest(cartChangeSelector);
+      if (cartChange) {
+        const snapshot = returnSnapshot;
+        returnSnapshot = null;
+        setTimeout(() => {
+          syncAddButtons();
+          if (snapshot && cartQty(snapshot.id) < 1) {
+            const destination = productTarget(snapshot.id);
+            if (destination) flyImage(null, destination, { reverse: true, snapshot });
+          }
+        }, 0);
+      }
+    });
+
     addEventListener('storage', event => {
-      if (event.key !== CART_KEY) return;
-      syncButtons();
-      syncStickyCount();
+      if (event.key === CART_KEY) syncAddButtons();
     });
 
     const observer = new MutationObserver(records => {
-      let needsButtonSync = false;
-      let needsSticky = false;
-      let needsLinks = false;
-      records.forEach(record => record.addedNodes.forEach(node => {
-        if (node.nodeType !== 1) return;
-        if (node.matches?.(addSelector) || node.querySelector?.(addSelector)) needsButtonSync = true;
-        if (node.matches?.('.primary-nav-wrap,.primary-nav') || node.querySelector?.('.primary-nav-wrap,.primary-nav')) needsSticky = true;
-        if (node.matches?.('a[data-action="quick-view"][data-product-id]') || node.querySelector?.('a[data-action="quick-view"][data-product-id]')) needsLinks = true;
-      }));
-      if (needsButtonSync) syncButtons();
-      if (needsSticky) ensureStickyActions();
-      if (needsLinks) normalizeProductLinks();
+      let syncButtons = false;
+      let syncLinks = false;
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node.nodeType !== 1) continue;
+          if (node.matches?.(addSelector) || node.querySelector?.(addSelector)) syncButtons = true;
+          if (node.matches?.('a[data-action="quick-view"][data-product-id]') || node.querySelector?.('a[data-action="quick-view"][data-product-id]')) syncLinks = true;
+        }
+      }
+      if (syncButtons) syncAddButtons();
+      if (syncLinks) normalizeProductLinks();
     });
     observer.observe(document.body, { childList: true, subtree: true });
   }
