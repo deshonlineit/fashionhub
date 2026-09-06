@@ -1,28 +1,38 @@
 /* FashionHub cart interaction polish */
 
-/* Product-card add buttons use text everywhere instead of icon-only controls. */
+/* One shared Add to cart treatment everywhere. */
 .product-card__footer{min-width:0}
-.add-button{
-  width:auto!important;
-  min-width:92px!important;
-  height:34px!important;
-  flex:0 0 auto!important;
-  padding:0 11px!important;
+[data-action="add-cart"][data-product-id]{
+  min-width:104px!important;
+  min-height:36px!important;
+  padding:0 13px!important;
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
   gap:6px!important;
-  border-radius:9px!important;
+  border:1px solid transparent!important;
+  border-radius:10px!important;
+  background:linear-gradient(180deg,#f73871,#eb235e)!important;
+  color:#fff!important;
+  box-shadow:0 8px 20px rgba(245,44,103,.17)!important;
   white-space:nowrap!important;
-  font-size:9.5px!important;
+  font-size:10px!important;
   font-weight:850!important;
   line-height:1!important;
+  cursor:pointer!important;
   transition:background-color .32s ease,color .32s ease,border-color .32s ease,box-shadow .32s ease,transform .32s cubic-bezier(.2,.7,.2,1)!important;
 }
-.add-button svg{width:13px!important;height:13px!important;flex:0 0 auto}
-.add-button.is-adding,
-.digital-card [data-action="add-cart"].is-adding,
-.primary-button[data-action="add-cart"].is-adding{
+[data-action="add-cart"][data-product-id]:hover:not(:disabled){
+  background:linear-gradient(180deg,#ef2b65,#d91e53)!important;
+  box-shadow:0 11px 25px rgba(245,44,103,.23)!important;
+  transform:translateY(-1px)!important;
+}
+[data-action="add-cart"][data-product-id] svg{
+  width:14px!important;
+  height:14px!important;
+  flex:0 0 auto!important;
+}
+[data-action="add-cart"][data-product-id].is-adding{
   background:#fff6f9!important;
   border-color:#ffd4df!important;
   color:var(--accent-strong)!important;
@@ -31,18 +41,14 @@
   transform:none!important;
   opacity:1!important;
 }
-.add-button.is-adding svg,
-.digital-card [data-action="add-cart"].is-adding svg,
-.primary-button[data-action="add-cart"].is-adding svg{
+[data-action="add-cart"][data-product-id].is-adding svg{
   animation:fh-adding-pulse .72s ease-in-out infinite alternate;
 }
 @keyframes fh-adding-pulse{
   from{transform:scale(.92);opacity:.58}
   to{transform:scale(1.08);opacity:1}
 }
-.add-button.is-added,
-.digital-card [data-action="add-cart"].is-added,
-.primary-button[data-action="add-cart"].is-added{
+[data-action="add-cart"][data-product-id].is-added{
   background:#edf9f4!important;
   border-color:#cdeee0!important;
   color:#16845f!important;
@@ -51,9 +57,7 @@
   transform:none!important;
   opacity:1!important;
 }
-.add-button.is-added svg,
-.digital-card [data-action="add-cart"].is-added svg,
-.primary-button[data-action="add-cart"].is-added svg{
+[data-action="add-cart"][data-product-id].is-added svg{
   animation:fh-check-pop .46s cubic-bezier(.2,.85,.2,1);
 }
 @keyframes fh-check-pop{
@@ -61,21 +65,17 @@
   65%{transform:scale(1.16);opacity:1}
   100%{transform:scale(1)}
 }
-.add-button:disabled,
-.digital-card [data-action="add-cart"]:disabled,
-.primary-button[data-action="add-cart"]:disabled{
+[data-action="add-cart"][data-product-id]:disabled{
   opacity:1!important;
   pointer-events:none!important;
 }
-.digital-card [data-action="add-cart"]{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:6px!important;
-  white-space:nowrap;
+
+/* Card buttons stay compact; full-width product/quick-view buttons keep their layout width. */
+.add-button{
+  width:auto!important;
+  height:36px!important;
+  flex:0 0 auto!important;
 }
-.digital-card [data-action="add-cart"] svg,
-.primary-button[data-action="add-cart"] svg{width:14px;height:14px}
 
 /* Fly-to-cart / return-to-product visual. JS supplies the start/end coordinates. */
 .fh-cart-fly{
@@ -295,7 +295,7 @@
 
 @media (max-width:700px){
   .cart-drawer{width:min(92vw,360px)!important}
-  .add-button{min-width:88px!important;padding-inline:9px!important;font-size:9px!important}
+  [data-action="add-cart"][data-product-id]{min-width:96px!important;padding-inline:10px!important;font-size:9.5px!important}
   .product-card__footer{gap:6px!important}
 }
 
@@ -305,8 +305,8 @@
     align-items:stretch!important;
     flex-wrap:wrap!important;
   }
-  .product-rail.is-grid .add-button,
-  .catalog-grid .add-button{
+  .product-rail.is-grid [data-action="add-cart"][data-product-id],
+  .catalog-grid [data-action="add-cart"][data-product-id]{
     width:100%!important;
     min-width:0!important;
     margin-top:2px!important;
@@ -322,8 +322,9 @@
   .digital-card.fh-product-return-hit,
   .product-layout.fh-product-return-hit,
   .cart-drawer.fh-cart-arrive,
-  .add-button.is-adding svg{
+  [data-action="add-cart"][data-product-id].is-adding svg,
+  [data-action="add-cart"][data-product-id].is-added svg{
     animation:none!important;
   }
-  .cart-drawer,.cart-backdrop,.fh-sticky-actions{transition:none!important}
+  .cart-drawer,.cart-backdrop,.fh-sticky-actions,[data-action="add-cart"][data-product-id]{transition:none!important}
 }
