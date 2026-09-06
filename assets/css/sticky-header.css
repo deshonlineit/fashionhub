@@ -33,6 +33,10 @@
 @media (min-width:981px){
   .nav-sticky-spacer.is-active{height:65px}
 
+  /* The launcher belongs to the menu row. Hide the pre-JS header copy so it can never flash in the wrong place. */
+  .header-main>.category-launcher{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+  .primary-nav>.category-launcher{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+
   .primary-nav-wrap{
     position:relative!important;
     top:auto!important;
