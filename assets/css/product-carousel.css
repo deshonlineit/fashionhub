@@ -40,6 +40,9 @@
 .product-card__quick{
   bottom:8px!important;
 }
+.flash-panel__products{
+  padding:clamp(17px,1.8vw,22px)!important;
+}
 
 /* The cloned rails are only for visual continuity. Grid mode shows originals once. */
 .product-rail.is-grid [data-loop-clone="1"]{
@@ -74,7 +77,11 @@
   scroll-snap-type:x proximity!important;
 }
 .review-card{
+  padding:16px!important;
   scroll-snap-align:start;
+}
+.review-card__top{
+  gap:9px!important;
 }
 
 @media (min-width:701px){
@@ -93,6 +100,9 @@
   .product-rail:not(.is-grid) .product-card,
   .product-rail:not(.is-grid) .product-card--compact{
     flex-basis:min(76vw,238px)!important;
+  }
+  .flash-panel__products{
+    padding:14px!important;
   }
   .flash-panel__products .product-rail:not(.is-grid) .product-card{
     flex-basis:min(70vw,222px)!important;
