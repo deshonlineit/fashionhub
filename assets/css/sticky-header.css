@@ -1,4 +1,4 @@
-/* FashionHub sticky navigation row only */
+/* FashionHub fixed navigation row only */
 
 /* The logo/search/account header scrolls away normally. */
 .site-header{
@@ -12,18 +12,27 @@
   -webkit-backdrop-filter:none!important;
 }
 
+/* Marker used by JS to know when the menu row has reached the viewport top. */
 .nav-sticky-sentinel{
+  display:block;
   width:100%;
   height:1px;
-  margin-top:-1px;
+  margin:0;
+  padding:0;
   pointer-events:none;
 }
 
 @media (min-width:981px){
-  /* Only this lower menu row remains visible while the page scrolls. */
+  /*
+   * Do not rely on position:sticky here. The storefront sets horizontal
+   * overflow rules on html/body, which can make sticky positioning unreliable
+   * in some browsers. JS adds .is-stuck and this row then becomes fixed.
+   */
   .primary-nav-wrap{
-    position:sticky!important;
-    top:0!important;
+    position:relative!important;
+    top:auto!important;
+    left:auto!important;
+    right:auto!important;
     z-index:220!important;
     width:100%;
     min-height:54px;
@@ -43,9 +52,16 @@
       min-height .72s cubic-bezier(.2,.7,.2,1)!important;
   }
 
+  /* Fixed state: only the row of menu items remains visible. */
   .primary-nav-wrap.is-stuck{
+    position:fixed!important;
+    top:0!important;
+    left:0!important;
+    right:0!important;
+    width:100%!important;
     min-height:50px;
-    background:rgba(255,255,255,.91)!important;
+    z-index:9999!important;
+    background:rgba(255,255,255,.93)!important;
     border-top-color:transparent!important;
     border-bottom-color:rgba(220,222,231,.9)!important;
     box-shadow:0 14px 38px rgba(24,28,40,.12);
@@ -54,8 +70,13 @@
     animation:fh-nav-arrive .68s cubic-bezier(.2,.7,.2,1) both;
   }
 
+  /* Keep the page from jumping when the row switches to fixed positioning. */
+  .nav-sticky-sentinel:has(+ .primary-nav-wrap.is-stuck){
+    height:51px;
+  }
+
   @keyframes fh-nav-arrive{
-    from{opacity:.86;transform:translateY(-8px)}
+    from{opacity:.84;transform:translateY(-10px)}
     to{opacity:1;transform:translateY(0)}
   }
 
@@ -78,7 +99,7 @@
     position:relative!important;
     left:auto!important;
     top:auto!important;
-    z-index:230!important;
+    z-index:10010!important;
     flex:0 0 auto;
     height:40px;
     display:flex;
@@ -94,15 +115,15 @@
     box-shadow:0 8px 22px rgba(244,50,104,.18);
   }
 
-  /* Keep dropdowns above the sticky row and page content. */
-  .category-launcher,
-  .category-mega,
-  .primary-nav ul ul{
-    z-index:240!important;
+  /* Keep dropdowns and mega menus above all page content. */
+  .primary-nav-wrap.is-stuck .category-launcher,
+  .primary-nav-wrap.is-stuck .category-mega,
+  .primary-nav-wrap.is-stuck .primary-nav ul ul{
+    z-index:10020!important;
   }
 }
 
-/* Mobile has no desktop menu row, so do not make the whole mobile header sticky here. */
+/* Mobile has no desktop menu row, so the mobile header scrolls normally. */
 @media (max-width:980px){
   .site-header{position:relative!important;top:auto!important}
 }
