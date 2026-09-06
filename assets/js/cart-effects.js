@@ -65,6 +65,20 @@
     });
   }
 
+  function normalizeProductLinks(root = document) {
+    const selector = 'a[data-action="quick-view"][data-product-id]';
+    const links = [];
+    if (root.matches?.(selector)) links.push(root);
+    root.querySelectorAll?.(selector).forEach(link => links.push(link));
+    links.forEach(link => {
+      const id = String(link.dataset.productId || '');
+      if (!id) return;
+      link.href = `product.html?id=${encodeURIComponent(id)}`;
+      link.removeAttribute('data-action');
+      link.setAttribute('aria-label', `View ${link.textContent.trim() || 'product'} details`);
+    });
+  }
+
   function sourceImage(button) {
     const scopes = [
       button.closest('.product-card'),
@@ -204,22 +218,20 @@
   }
 
   function ensureStickyActions() {
-    const nav = document.querySelector('.primary-nav-wrap .primary-nav');
-    if (!nav) return false;
-    if (nav.querySelector('.fh-sticky-actions')) {
-      syncStickyCount();
-      return true;
+    const navWrap = document.querySelector('.primary-nav-wrap');
+    if (!navWrap) return false;
+    let actions = navWrap.querySelector(':scope > .fh-sticky-actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'fh-sticky-actions';
+      actions.setAttribute('aria-label', 'Sticky account and cart actions');
+      actions.innerHTML = `
+        <a class="fh-sticky-action fh-sticky-account-action" href="account.html" aria-label="Account" title="Account">${svg('user')}</a>
+        <button class="fh-sticky-action fh-sticky-cart-action" type="button" data-action="open-cart" aria-label="Open shopping cart" title="Cart">
+          <span class="fh-sticky-action-icon">${svg('cart')}<b class="fh-sticky-cart-count" hidden>0</b></span>
+        </button>`;
+      navWrap.appendChild(actions);
     }
-
-    const actions = document.createElement('div');
-    actions.className = 'fh-sticky-actions';
-    actions.setAttribute('aria-label', 'Sticky account and cart actions');
-    actions.innerHTML = `
-      <a class="fh-sticky-action" href="account.html" aria-label="Account" title="Account">${svg('user')}</a>
-      <button class="fh-sticky-action fh-sticky-cart-action" type="button" data-action="open-cart" aria-label="Open shopping cart" title="Cart">
-        <span class="fh-sticky-action-icon">${svg('cart')}<b class="fh-sticky-cart-count" hidden>0</b></span>
-      </button>`;
-    nav.appendChild(actions);
     syncStickyCount();
 
     const source = document.getElementById('cartCount');
@@ -231,13 +243,10 @@
   }
 
   function watchStickyActions() {
-    if (ensureStickyActions()) return;
-    const observer = new MutationObserver(() => {
-      if (!ensureStickyActions()) return;
-      observer.disconnect();
-    });
+    ensureStickyActions();
+    const observer = new MutationObserver(() => ensureStickyActions());
     observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => observer.disconnect(), 5000);
+    setTimeout(() => observer.disconnect(), 8000);
   }
 
   function openMiniCart() {
@@ -313,11 +322,37 @@
     setTimeout(() => main.classList.remove('is-changing'), 420);
   }
 
+  function productPageUrl(id) {
+    return `product.html?id=${encodeURIComponent(String(id || ''))}`;
+  }
+
+  function handleCardNavigation(event) {
+    const quickLink = event.target.closest('a[data-action="quick-view"][data-product-id]');
+    if (quickLink) {
+      const id = quickLink.dataset.productId;
+      if (!id) return false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      location.href = productPageUrl(id);
+      return true;
+    }
+
+    const card = event.target.closest('.product-card[data-product-id],.digital-card[data-product-id]');
+    if (!card || event.target.closest('a,button,input,select,textarea,label')) return false;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    location.href = productPageUrl(card.dataset.productId);
+    return true;
+  }
+
   function bind() {
     syncButtons();
+    normalizeProductLinks();
     watchStickyActions();
 
     document.addEventListener('click', event => {
+      if (handleCardNavigation(event)) return;
+
       const thumb = event.target.closest('[data-action="thumb"]');
       if (thumb) {
         handleThumbnail(thumb);
@@ -351,13 +386,16 @@
     const observer = new MutationObserver(records => {
       let needsButtonSync = false;
       let needsSticky = false;
+      let needsLinks = false;
       records.forEach(record => record.addedNodes.forEach(node => {
         if (node.nodeType !== 1) return;
         if (node.matches?.(addSelector) || node.querySelector?.(addSelector)) needsButtonSync = true;
         if (node.matches?.('.primary-nav-wrap,.primary-nav') || node.querySelector?.('.primary-nav-wrap,.primary-nav')) needsSticky = true;
+        if (node.matches?.('a[data-action="quick-view"][data-product-id]') || node.querySelector?.('a[data-action="quick-view"][data-product-id]')) needsLinks = true;
       }));
       if (needsButtonSync) syncButtons();
       if (needsSticky) ensureStickyActions();
+      if (needsLinks) normalizeProductLinks();
     });
     observer.observe(document.body, { childList: true, subtree: true });
   }
