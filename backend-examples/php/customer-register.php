@@ -24,6 +24,14 @@ $district = trim((string)($payload['district'] ?? ''));
 $postcode = trim((string)($payload['postcode'] ?? ''));
 $password = (string)($payload['password'] ?? '');
 
+// Older account-page builds used these placeholders. Treat them as an identity-only registration.
+if ($phone === 'Not set' && $address === 'Not set' && $district === 'Not set') {
+    $source = 'account';
+    $phone = '';
+    $address = '';
+    $district = '';
+}
+
 $identityValid = $firstName !== '' && $lastName !== '' && filter_var($email, FILTER_VALIDATE_EMAIL);
 $checkoutAddressValid = $phone !== '' && $address !== '' && $district !== '';
 if (!$identityValid || ($source !== 'account' && !$checkoutAddressValid)) {
