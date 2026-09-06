@@ -43,7 +43,9 @@
   body{--fh-shell-edge:max(18px,calc((100vw - min(94vw,1320px))/2))}
   .primary-nav-wrap.is-stuck .primary-nav{padding-right:116px!important}
   body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"],
-  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"]{
+  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account.html"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>button[data-action="open-cart"]{
     position:fixed!important;
     top:7px!important;
     z-index:2147483000!important;
@@ -67,8 +69,10 @@
     transform:none!important;
     transition:color .2s ease,background-color .2s ease!important;
   }
-  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]{right:calc(var(--fh-shell-edge) + 54px)!important}
-  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"]{right:var(--fh-shell-edge)!important}
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account.html"]{right:calc(var(--fh-shell-edge) + 54px)!important}
+  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>button[data-action="open-cart"]{right:var(--fh-shell-edge)!important}
   body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]:hover,
   body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"]:hover{background:var(--accent-soft)!important;color:var(--accent)!important}
   body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]>svg,
