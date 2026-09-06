@@ -37,22 +37,29 @@
 @keyframes fh-cart-hit{0%,100%{transform:scale(1)}35%{transform:scale(1.22)}65%{transform:scale(.95)}}
 @keyframes fh-product-hit{0%,100%{filter:none}45%{filter:drop-shadow(0 0 12px rgb(245 44 103/.32))}}
 
-/* Reuse the real Account + Cart actions from the main header when the lower nav sticks. */
+/* Reuse the real Wishlist, Cart and Account actions from the main header when the lower nav sticks. */
 .fh-sticky-actions{display:none!important}
 @media (min-width:981px){
   body{--fh-shell-edge:max(18px,calc((100vw - min(94vw,1320px))/2))}
-  .primary-nav-wrap.is-stuck .primary-nav{padding-right:116px!important}
+  .primary-nav-wrap.is-stuck .primary-nav{padding-right:0!important}
   body.fh-nav-stuck .site-header,
   body:has(.primary-nav-wrap.is-stuck) .site-header{z-index:10005!important}
-  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"],
+
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist"],
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist.html"],
   body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"],
-  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account.html"],
-  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>button[data-action="open-cart"]{
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account"],
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="wishlist"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="wishlist.html"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>button[data-action="open-cart"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account.html"]{
     position:fixed!important;
     top:7px!important;
     z-index:2147483000!important;
-    width:48px!important;
-    min-width:48px!important;
+    width:46px!important;
+    min-width:46px!important;
     height:50px!important;
     margin:0!important;
     padding:4px 2px!important;
@@ -71,17 +78,42 @@
     transform:none!important;
     transition:color .2s ease,background-color .2s ease!important;
   }
+
+  /* Requested sticky order: Wishlist -> Cart -> Account. */
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account"],
   body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"],
-  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account.html"]{right:calc(var(--fh-shell-edge) + 54px)!important}
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account.html"]{right:var(--fh-shell-edge)!important}
+
   body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"],
-  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>button[data-action="open-cart"]{right:var(--fh-shell-edge)!important}
-  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]:hover,
-  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"]:hover{background:var(--accent-soft)!important;color:var(--accent)!important}
-  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]>svg,
-  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"] .action-icon>svg{width:21px!important;height:21px!important}
-  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]>span:last-child,
-  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"]>span:last-child{display:block!important;font-size:8px!important;font-weight:800!important;line-height:1!important}
-  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"] .count-badge{right:-9px!important;top:-7px!important}
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>button[data-action="open-cart"]{right:calc(var(--fh-shell-edge) + 50px)!important}
+
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist"],
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist.html"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="wishlist"],
+  body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="wishlist.html"]{right:calc(var(--fh-shell-edge) + 100px)!important}
+
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist"]:hover,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist.html"]:hover,
+  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"]:hover,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account"]:hover,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]:hover{background:var(--accent-soft)!important;color:var(--accent)!important}
+
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist"] .action-icon>svg,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist.html"] .action-icon>svg,
+  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"] .action-icon>svg,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account"]>svg,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]>svg{width:21px!important;height:21px!important}
+
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist"]>span:last-child,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist.html"]>span:last-child,
+  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"]>span:last-child,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account"]>span:last-child,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"]>span:last-child{display:block!important;font-size:8px!important;font-weight:800!important;line-height:1!important}
+
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist"] .count-badge,
+  body.fh-nav-stuck .site-header .header-actions>a[href$="wishlist.html"] .count-badge,
+  body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"] .count-badge{right:-8px!important;top:-7px!important}
 }
 
 /* Compact high-layer mini cart. */
