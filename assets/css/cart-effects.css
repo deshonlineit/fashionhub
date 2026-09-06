@@ -17,8 +17,29 @@
   font-size:9.5px!important;
   font-weight:850!important;
   line-height:1!important;
+  transition:background-color .32s ease,color .32s ease,border-color .32s ease,box-shadow .32s ease,transform .32s cubic-bezier(.2,.7,.2,1)!important;
 }
 .add-button svg{width:13px!important;height:13px!important;flex:0 0 auto}
+.add-button.is-adding,
+.digital-card [data-action="add-cart"].is-adding,
+.primary-button[data-action="add-cart"].is-adding{
+  background:#fff6f9!important;
+  border-color:#ffd4df!important;
+  color:var(--accent-strong)!important;
+  box-shadow:0 7px 18px rgba(245,44,103,.08)!important;
+  cursor:wait!important;
+  transform:none!important;
+  opacity:1!important;
+}
+.add-button.is-adding svg,
+.digital-card [data-action="add-cart"].is-adding svg,
+.primary-button[data-action="add-cart"].is-adding svg{
+  animation:fh-adding-pulse .72s ease-in-out infinite alternate;
+}
+@keyframes fh-adding-pulse{
+  from{transform:scale(.92);opacity:.58}
+  to{transform:scale(1.08);opacity:1}
+}
 .add-button.is-added,
 .digital-card [data-action="add-cart"].is-added,
 .primary-button[data-action="add-cart"].is-added{
@@ -29,6 +50,16 @@
   cursor:default!important;
   transform:none!important;
   opacity:1!important;
+}
+.add-button.is-added svg,
+.digital-card [data-action="add-cart"].is-added svg,
+.primary-button[data-action="add-cart"].is-added svg{
+  animation:fh-check-pop .46s cubic-bezier(.2,.85,.2,1);
+}
+@keyframes fh-check-pop{
+  0%{transform:scale(.5);opacity:.2}
+  65%{transform:scale(1.16);opacity:1}
+  100%{transform:scale(1)}
 }
 .add-button:disabled,
 .digital-card [data-action="add-cart"]:disabled,
@@ -46,7 +77,7 @@
 .digital-card [data-action="add-cart"] svg,
 .primary-button[data-action="add-cart"] svg{width:14px;height:14px}
 
-/* Fly-to-cart visual. JS supplies the start/end coordinates. */
+/* Fly-to-cart / return-to-product visual. JS supplies the start/end coordinates. */
 .fh-cart-fly{
   position:fixed!important;
   z-index:30000!important;
@@ -60,19 +91,114 @@
   box-shadow:0 16px 38px rgba(20,25,38,.19)!important;
   will-change:transform,opacity;
 }
+.fh-cart-fly--return{
+  box-shadow:0 18px 42px rgba(245,44,103,.17)!important;
+  border-color:#ffd5e1!important;
+}
 .action-icon.fh-cart-hit,
+.fh-sticky-action-icon.fh-cart-hit,
 [data-action="open-cart"].fh-cart-hit{
-  animation:fh-cart-hit .62s cubic-bezier(.2,.8,.2,1);
+  animation:fh-cart-hit .74s cubic-bezier(.2,.8,.2,1);
 }
 @keyframes fh-cart-hit{
   0%,100%{transform:scale(1)}
-  35%{transform:scale(1.22)}
+  34%{transform:scale(1.23)}
   62%{transform:scale(.94)}
+}
+.product-card.fh-product-return-hit,
+.digital-card.fh-product-return-hit,
+.product-layout.fh-product-return-hit{
+  animation:fh-product-return-hit .86s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes fh-product-return-hit{
+  0%,100%{box-shadow:inherit}
+  42%{box-shadow:0 0 0 4px rgba(245,44,103,.11),0 18px 44px rgba(245,44,103,.16)}
+}
+
+/* Account + cart actions appear on the right side of the sticky navigation only. */
+@media (min-width:981px){
+  .primary-nav{position:relative!important}
+  .fh-sticky-actions{
+    position:absolute;
+    right:0;
+    top:50%;
+    z-index:10035;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(-50%) translateX(10px);
+    transition:opacity .34s ease,transform .42s cubic-bezier(.2,.7,.2,1),visibility .34s ease;
+  }
+  .primary-nav-wrap.is-stuck .fh-sticky-actions{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:translateY(-50%) translateX(0);
+  }
+  .fh-sticky-action{
+    position:relative;
+    width:38px;
+    height:38px;
+    padding:0;
+    border:1px solid #e5e7ed;
+    border-radius:11px;
+    background:rgba(255,255,255,.95);
+    color:#343846;
+    display:grid;
+    place-items:center;
+    cursor:pointer;
+    box-shadow:0 6px 18px rgba(20,25,38,.06);
+    transition:background-color .28s ease,color .28s ease,border-color .28s ease,box-shadow .32s ease,transform .32s cubic-bezier(.2,.7,.2,1);
+  }
+  .fh-sticky-action:hover{
+    background:#fff1f5;
+    color:var(--accent-strong);
+    border-color:#ffd2df;
+    box-shadow:0 10px 24px rgba(245,44,103,.12);
+    transform:translateY(-1px);
+  }
+  .fh-sticky-action>svg,
+  .fh-sticky-action-icon>svg{width:18px;height:18px}
+  .fh-sticky-action-icon{position:relative;display:grid;place-items:center}
+  .fh-sticky-cart-count{
+    position:absolute;
+    right:-9px;
+    top:-9px;
+    min-width:17px;
+    height:17px;
+    padding:0 4px;
+    border-radius:99px;
+    display:grid;
+    place-items:center;
+    background:var(--accent);
+    color:#fff;
+    border:2px solid #fff;
+    font-size:8px;
+    font-weight:900;
+    line-height:1;
+    box-shadow:0 3px 8px rgba(245,44,103,.18);
+  }
 }
 
 /* Compact mini cart: more products fit comfortably in the viewport. */
+.cart-backdrop{
+  transition:opacity .36s ease,visibility .36s ease!important;
+}
 .cart-drawer{
   width:min(90vw,380px)!important;
+  transition:transform .48s cubic-bezier(.16,.84,.24,1)!important;
+  will-change:transform;
+}
+.cart-drawer.fh-cart-arrive{
+  animation:fh-cart-arrive .66s cubic-bezier(.18,.82,.24,1);
+}
+@keyframes fh-cart-arrive{
+  0%{box-shadow:0 20px 70px rgba(20,25,38,.12)}
+  45%{box-shadow:0 24px 76px rgba(245,44,103,.17)}
+  100%{box-shadow:var(--shadow-lg)}
 }
 .cart-drawer__header{
   min-height:60px!important;
@@ -161,6 +287,12 @@
 .cart-empty b{font-size:13px!important;margin-bottom:3px!important}
 .cart-empty span{font-size:10px!important}
 
+@media (max-width:1180px) and (min-width:981px){
+  .fh-sticky-actions{right:2px;gap:5px}
+  .fh-sticky-action{width:34px;height:34px;border-radius:10px}
+  .fh-sticky-action>svg,.fh-sticky-action-icon>svg{width:16px;height:16px}
+}
+
 @media (max-width:700px){
   .cart-drawer{width:min(92vw,360px)!important}
   .add-button{min-width:88px!important;padding-inline:9px!important;font-size:9px!important}
@@ -183,5 +315,15 @@
 
 @media (prefers-reduced-motion:reduce){
   .fh-cart-fly{display:none!important}
-  .action-icon.fh-cart-hit,[data-action="open-cart"].fh-cart-hit{animation:none!important}
+  .action-icon.fh-cart-hit,
+  .fh-sticky-action-icon.fh-cart-hit,
+  [data-action="open-cart"].fh-cart-hit,
+  .product-card.fh-product-return-hit,
+  .digital-card.fh-product-return-hit,
+  .product-layout.fh-product-return-hit,
+  .cart-drawer.fh-cart-arrive,
+  .add-button.is-adding svg{
+    animation:none!important;
+  }
+  .cart-drawer,.cart-backdrop,.fh-sticky-actions{transition:none!important}
 }
