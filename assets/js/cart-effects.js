@@ -16,10 +16,6 @@
     }
   }
 
-  function inCart(id) {
-    return Number(readCart()[id] || 0) > 0;
-  }
-
   function isCardButton(button) {
     return button.classList.contains('add-button') || !!button.closest('.product-card,.digital-card');
   }
@@ -44,7 +40,11 @@
   }
 
   function syncButtons(root = document) {
-    root.querySelectorAll?.(addSelector).forEach(button => renderButton(button, inCart(button.dataset.productId)));
+    const cart = readCart();
+    const buttons = [];
+    if (root.matches?.(addSelector)) buttons.push(root);
+    root.querySelectorAll?.(addSelector).forEach(button => buttons.push(button));
+    buttons.forEach(button => renderButton(button, Number(cart[button.dataset.productId] || 0) > 0));
   }
 
   function sourceImage(button) {
@@ -135,9 +135,7 @@
     document.addEventListener('click', event => {
       const addButton = event.target.closest(addSelector);
       if (addButton && !addButton.disabled) {
-        const image = sourceImage(addButton);
-        const target = cartTarget();
-        flyToCart(image, target);
+        flyToCart(sourceImage(addButton), cartTarget());
         setTimeout(() => {
           renderButton(addButton, true);
           syncButtons();
@@ -155,7 +153,7 @@
     const observer = new MutationObserver(records => {
       records.forEach(record => record.addedNodes.forEach(node => {
         if (node.nodeType !== 1) return;
-        if (node.matches?.(addSelector)) renderButton(node, inCart(node.dataset.productId));
+        if (!node.matches?.(addSelector) && !node.querySelector?.(addSelector)) return;
         syncButtons(node);
       }));
     });
