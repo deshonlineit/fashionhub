@@ -19,7 +19,10 @@
   const API = {
     async home() {
       const fallback = window.__FASHIONHUB_HOME__;
-      if (location.protocol === 'file:') return fallback;
+      // The bundled data is already loaded before app.js. Use it immediately so
+      // first paint never waits for a second home.json request. Remove
+      // data/home-data.js later when switching this storefront to a live API.
+      if (fallback) return fallback;
       try {
         const base = String(CONFIG.apiBase || '').replace(/\/$/, '');
         const endpoint = String(CONFIG.homeEndpoint || '').trim();
@@ -213,7 +216,7 @@
 
   function renderDepartments() {
     const departments = state.data.departments;
-    byId('departmentTabs').innerHTML = departments.map((department, index) => `<button type="button" role="tab" data-department="${esc(department.id)}" class="${index === 0 ? 'is-active' : ''}" aria-selected="${index === 0}">${esc(department.id)}</button>`).join('');
+    byId('departmentTabs').innerHTML = departments.map((department, index) => `<button type="button" role="tab" data-department="${esc(department.id)}" class="${index === 0 ? ' is-active' : ''}" aria-selected="${index === 0}">${esc(department.id)}</button>`).join('');
     renderDepartment(departments[0].id);
   }
 
