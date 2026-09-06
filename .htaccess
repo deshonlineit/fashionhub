@@ -11,13 +11,8 @@ DirectoryIndex index.html
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Existing files and directories always win. This protects assets and backend files.
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
-
-  # Legacy query-string routes -> clean public routes.
-  # THE_REQUEST ensures an internal rewrite never redirects itself.
+  # Legacy browser-visible URLs -> clean public URLs.
+  # These rules must run BEFORE the real-file guard because the old .html files physically exist.
   RewriteCond %{THE_REQUEST} \s/+[^?\s]*product\.html\?id=([0-9]+) [NC]
   RewriteRule ^product\.html$ product-p%1 [R=301,L,NE,QSD]
 
@@ -36,20 +31,24 @@ DirectoryIndex index.html
   RewriteCond %{THE_REQUEST} \s/+[^?\s]*archive\.html\?type=deals(?:[&\s]) [NC]
   RewriteRule ^archive\.html$ deals [R=301,L,NE,QSD]
 
-  # Safe index.html -> project root redirect. REQUEST_URI is a URL path, never a Windows filesystem path.
+  # Safe index.html -> project root. REQUEST_URI is a URL path, never C:/xampp/... .
   RewriteCond %{THE_REQUEST} \s/+[^?\s]*index\.html(?:[?\s]) [NC]
   RewriteCond %{REQUEST_URI} ^(.*/)index\.html$ [NC]
   RewriteRule ^index\.html$ %1 [R=301,L,NE,QSD]
 
-  # Simple old .html pages -> extensionless equivalents.
   RewriteCond %{THE_REQUEST} \s/+[^?\s]*(account|archive|blog|cart|category|checkout|contact|post|product|search|shop|wishlist)\.html(?:[?\s]) [NC]
   RewriteRule ^(account|archive|blog|cart|category|checkout|contact|post|product|search|shop|wishlist)\.html$ $1 [R=301,L,NE,QSD]
+
+  # Real files/directories now pass through untouched (CSS, JS, images, backend files, etc.).
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
   # No trailing slash on virtual routes. The project root itself remains slash-terminated.
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^(.+)/$ $1 [R=301,L,NE]
 
-  # SEO-friendly public routes. Query values below are internal only and never appear in the browser URL.
+  # SEO-friendly public routes. Query values are internal to Apache only.
   RewriteRule ^product-(?:[a-z0-9-]+-)?p([0-9]+)$ product.html?id=$1 [L,QSA,NC]
   RewriteRule ^category-([a-z0-9-]+)$ category.html?cat=$1 [L,QSA,NC]
   RewriteRule ^search-([a-z0-9-]+)$ search.html?q=$1 [L,QSA,NC]
@@ -104,7 +103,6 @@ DirectoryIndex index.html
 </IfModule>
 
 <IfModule mod_headers.c>
-  # Revalidate CSS/JS while the storefront is actively changing; avoids week-old frontend code.
   <FilesMatch "\.(?:css|js)$">
     Header set Cache-Control "public, max-age=0, must-revalidate"
   </FilesMatch>
@@ -119,13 +117,7 @@ DirectoryIndex index.html
   </FilesMatch>
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
-  </FilesMatch>
-
-  # Local XAMPP browsers may still hold the previous 7-day JS cache. Clear it on localhost HTML loads only.
-  Header always set Clear-Site-Data "\"cache\"" env=fashionhub_local
-  Header merge Vary "Accept-Encoding"
-
-  <FilesMatch "\.html$">
+    Header always set Clear-Site-Data "\"cache\"" env=fashionhub_local
     Header add Link "<assets/js/config.js>; rel=preload; as=script"
     Header add Link "<data/home-data.js>; rel=preload; as=script"
     Header add Link "<assets/js/category-hover.js>; rel=preload; as=script"
@@ -137,6 +129,7 @@ DirectoryIndex index.html
     Header add Link "<assets/css/product-carousel.css>; rel=preload; as=style"
     Header add Link "<assets/css/cart-effects.css>; rel=preload; as=style"
   </FilesMatch>
+
   <Files "index.html">
     Header add Link "<assets/js/app.js>; rel=preload; as=script"
     Header add Link "<assets/images/banners/hero-fashion.webp>; rel=preload; as=image; fetchpriority=high"
