@@ -1,24 +1,23 @@
 # FashionHub Apache/XAMPP configuration
-# Clean public URLs, internal routing, compression and cache defaults.
+# Portable clean public URLs for localhost subfolders and live hosting.
 
 AddDefaultCharset UTF-8
 DirectoryIndex index.html
 
-# Apache content negotiation can steal extensionless routes such as /shop.
-# Disable it so mod_rewrite is the only clean-URL router.
-<IfModule mod_negotiation.c>
-  Options -MultiViews
+<IfModule mod_setenvif.c>
+  SetEnvIf Host "^localhost(?::[0-9]+)?$" fashionhub_local=1
 </IfModule>
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Home route. This also keeps the project root working when DirectoryIndex
-  # behavior differs between XAMPP and shared hosting.
-  RewriteRule ^$ index.html [L]
+  # Existing files and directories always win. This protects assets and backend files.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
-  # Canonical redirects from old public URLs. THE_REQUEST means these only
-  # fire for a URL typed/requested by the browser, never for an internal rewrite.
+  # Legacy query-string routes -> clean public routes.
+  # THE_REQUEST ensures an internal rewrite never redirects itself.
   RewriteCond %{THE_REQUEST} \s/+[^?\s]*product\.html\?id=([0-9]+) [NC]
   RewriteRule ^product\.html$ product-p%1 [R=301,L,NE,QSD]
 
@@ -37,52 +36,48 @@ DirectoryIndex index.html
   RewriteCond %{THE_REQUEST} \s/+[^?\s]*archive\.html\?type=deals(?:[&\s]) [NC]
   RewriteRule ^archive\.html$ deals [R=301,L,NE,QSD]
 
+  # Safe index.html -> project root redirect. REQUEST_URI is a URL path, never a Windows filesystem path.
   RewriteCond %{THE_REQUEST} \s/+[^?\s]*index\.html(?:[?\s]) [NC]
-  RewriteRule ^index\.html$ ./ [R=301,L,NE,QSD]
+  RewriteCond %{REQUEST_URI} ^(.*/)index\.html$ [NC]
+  RewriteRule ^index\.html$ %1 [R=301,L,NE,QSD]
 
-  RewriteCond %{THE_REQUEST} \s/+[^?\s]*[a-z0-9-]+\.html(?:[?\s]) [NC]
-  RewriteRule ^([a-z0-9-]+)\.html$ $1 [R=301,L,NE,QSD]
+  # Simple old .html pages -> extensionless equivalents.
+  RewriteCond %{THE_REQUEST} \s/+[^?\s]*(account|archive|blog|cart|category|checkout|contact|post|product|search|shop|wishlist)\.html(?:[?\s]) [NC]
+  RewriteRule ^(account|archive|blog|cart|category|checkout|contact|post|product|search|shop|wishlist)\.html$ $1 [R=301,L,NE,QSD]
 
-  # Existing files and real folders must never be routed through the storefront.
-  # This protects CSS/JS/images and backend directories from accidental rewrites.
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
-
-  # Remove trailing slash only for virtual clean routes. Keeping routes file-like
-  # also makes relative assets resolve correctly from a project subdirectory.
+  # No trailing slash on virtual routes. The project root itself remains slash-terminated.
+  RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^(.+)/$ $1 [R=301,L,NE]
 
-  # SEO-friendly public routes. Parameters are internal to Apache only and are
-  # never shown in the browser address bar.
-  RewriteRule ^product-(?:[a-z0-9-]+-)?p([0-9]+)$ product.html?id=$1 [END,QSA,NC]
-  RewriteRule ^category-([a-z0-9-]+)$ category.html?cat=$1 [END,QSA,NC]
-  RewriteRule ^search-([a-z0-9-]+)$ search.html?q=$1 [END,QSA,NC]
-  RewriteRule ^blog-(?:[a-z0-9-]+-)?p([0-9]+)$ post.html?post=$1 [END,QSA,NC]
-  RewriteRule ^blog-post-([0-9]+)$ post.html?post=$1 [END,QSA,NC]
-  RewriteRule ^new-arrivals$ shop.html?sort=new [END,QSA,NC]
-  RewriteRule ^deals$ archive.html?type=deals [END,QSA,NC]
+  # SEO-friendly public routes. Query values below are internal only and never appear in the browser URL.
+  RewriteRule ^product-(?:[a-z0-9-]+-)?p([0-9]+)$ product.html?id=$1 [L,QSA,NC]
+  RewriteRule ^category-([a-z0-9-]+)$ category.html?cat=$1 [L,QSA,NC]
+  RewriteRule ^search-([a-z0-9-]+)$ search.html?q=$1 [L,QSA,NC]
+  RewriteRule ^blog-(?:[a-z0-9-]+-)?p([0-9]+)$ post.html?post=$1 [L,QSA,NC]
+  RewriteRule ^blog-post-([0-9]+)$ post.html?post=$1 [L,QSA,NC]
+  RewriteRule ^new-arrivals$ shop.html?sort=new [L,QSA,NC]
+  RewriteRule ^deals$ archive.html?type=deals [L,QSA,NC]
 
-  # Simple extensionless pages.
-  RewriteRule ^shop$ shop.html [END,NC]
-  RewriteRule ^blog$ blog.html [END,NC]
-  RewriteRule ^cart$ cart.html [END,NC]
-  RewriteRule ^checkout$ checkout.html [END,NC]
-  RewriteRule ^contact$ contact.html [END,NC]
-  RewriteRule ^account$ account.html [END,NC]
-  RewriteRule ^wishlist$ wishlist.html [END,NC]
-  RewriteRule ^product$ product.html [END,NC]
-  RewriteRule ^category$ category.html [END,NC]
-  RewriteRule ^search$ search.html [END,NC]
-  RewriteRule ^archive$ archive.html [END,NC]
-  RewriteRule ^post$ post.html [END,NC]
+  # Extensionless static pages.
+  RewriteRule ^shop$ shop.html [L,NC]
+  RewriteRule ^blog$ blog.html [L,NC]
+  RewriteRule ^cart$ cart.html [L,NC]
+  RewriteRule ^checkout$ checkout.html [L,NC]
+  RewriteRule ^contact$ contact.html [L,NC]
+  RewriteRule ^account$ account.html [L,NC]
+  RewriteRule ^wishlist$ wishlist.html [L,NC]
+  RewriteRule ^product$ product.html [L,NC]
+  RewriteRule ^category$ category.html [L,NC]
+  RewriteRule ^search$ search.html [L,NC]
+  RewriteRule ^archive$ archive.html [L,NC]
+  RewriteRule ^post$ post.html [L,NC]
 
-  # Clean application-facing API aliases. PHP filenames stay internal.
-  RewriteRule ^api/customer/login$ backend-examples/php/checkout-login.php [END,NC]
-  RewriteRule ^api/customer/session$ backend-examples/php/customer-session.php [END,NC]
-  RewriteRule ^api/customer/register$ backend-examples/php/customer-register.php [END,NC]
-  RewriteRule ^api/customer/logout$ backend-examples/php/customer-logout.php [END,NC]
-  RewriteRule ^api/customer/profile$ backend-examples/php/customer-profile.php [END,NC]
+  # Public API aliases; PHP filenames stay internal.
+  RewriteRule ^api/customer/login$ backend-examples/php/checkout-login.php [L,NC]
+  RewriteRule ^api/customer/session$ backend-examples/php/customer-session.php [L,NC]
+  RewriteRule ^api/customer/register$ backend-examples/php/customer-register.php [L,NC]
+  RewriteRule ^api/customer/logout$ backend-examples/php/customer-logout.php [L,NC]
+  RewriteRule ^api/customer/profile$ backend-examples/php/customer-profile.php [L,NC]
 </IfModule>
 
 <IfModule mod_brotli.c>
@@ -96,9 +91,9 @@ DirectoryIndex index.html
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresByType text/html "access plus 0 seconds"
-  ExpiresByType text/css "access plus 7 days"
-  ExpiresByType application/javascript "access plus 7 days"
-  ExpiresByType text/javascript "access plus 7 days"
+  ExpiresByType text/css "access plus 0 seconds"
+  ExpiresByType application/javascript "access plus 0 seconds"
+  ExpiresByType text/javascript "access plus 0 seconds"
   ExpiresByType application/json "access plus 5 minutes"
   ExpiresByType image/svg+xml "access plus 30 days"
   ExpiresByType image/webp "access plus 1 year"
@@ -109,8 +104,9 @@ DirectoryIndex index.html
 </IfModule>
 
 <IfModule mod_headers.c>
+  # Revalidate CSS/JS while the storefront is actively changing; avoids week-old frontend code.
   <FilesMatch "\.(?:css|js)$">
-    Header set Cache-Control "public, max-age=604800"
+    Header set Cache-Control "public, max-age=0, must-revalidate"
   </FilesMatch>
   <FilesMatch "\.(?:webp|png|jpe?g|gif|ico)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
@@ -125,6 +121,8 @@ DirectoryIndex index.html
     Header set Cache-Control "no-cache"
   </FilesMatch>
 
+  # Local XAMPP browsers may still hold the previous 7-day JS cache. Clear it on localhost HTML loads only.
+  Header always set Clear-Site-Data "\"cache\"" env=fashionhub_local
   Header merge Vary "Accept-Encoding"
 
   <FilesMatch "\.html$">
