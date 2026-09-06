@@ -42,6 +42,8 @@
 @media (min-width:981px){
   body{--fh-shell-edge:max(18px,calc((100vw - min(94vw,1320px))/2))}
   .primary-nav-wrap.is-stuck .primary-nav{padding-right:116px!important}
+  body.fh-nav-stuck .site-header,
+  body:has(.primary-nav-wrap.is-stuck) .site-header{z-index:10005!important}
   body.fh-nav-stuck .site-header .header-actions>a[href$="account.html"],
   body.fh-nav-stuck .site-header .header-actions>button[data-action="open-cart"],
   body:has(.primary-nav-wrap.is-stuck) .site-header .header-actions>a[href$="account.html"],
