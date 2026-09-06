@@ -230,9 +230,7 @@
           <div class="fh-cat-detail-title"><span class="fh-cat-kicker">${esc(item.label)}</span><h3>${esc(group.label)}</h3><p>${models.length} models</p></div>
         </div>
         <div class="fh-cat-models">${models.map(model => `
-          <a href="category.html?cat=${encodeURIComponent(slugify(model.label))}" class="fh-cat-model">
-            <span>${esc(model.label)}</span>${icon('arrow-right')}
-          </a>`).join('')}</div>`;
+          <a href="category.html?cat=${encodeURIComponent(slugify(model.label))}" class="fh-cat-model"><span>${esc(model.label)}</span>${icon('arrow-right')}</a>`).join('')}</div>`;
       requestAnimationFrame(() => track.classList.add('is-detail'));
     };
 
@@ -251,9 +249,7 @@
           <button type="button" class="fh-cat-clear" data-fh-clear>Clear</button>
         </div>
         ${matches.length ? `<div class="fh-cat-results">${matches.map(result => `
-          <a class="fh-cat-result" href="category.html?cat=${encodeURIComponent(slugify(result.label))}">
-            <span><strong>${esc(result.label)}</strong><small>${result.path.slice(0, -1).map(esc).join(' / ')}</small></span>${icon('arrow-right')}
-          </a>`).join('')}</div>` : `<div class="fh-cat-empty"><div>${icon('search')}</div><h4>No model found</h4><p>Try a shorter model number or series name.</p></div>`}`;
+          <a class="fh-cat-result" href="category.html?cat=${encodeURIComponent(slugify(result.label))}"><span><strong>${esc(result.label)}</strong><small>${result.path.slice(0, -1).map(esc).join(' / ')}</small></span>${icon('arrow-right')}</a>`).join('')}</div>` : `<div class="fh-cat-empty"><div>${icon('search')}</div><h4>No model found</h4><p>Try a shorter model number or series name.</p></div>`}`;
     };
 
     rail.addEventListener('click', event => {
@@ -305,6 +301,235 @@
     positionSlider(menu);
   }
 
+  function getStoreData() {
+    return window.FASHIONHUB_DATA || window.__FASHIONHUB_HOME__ || null;
+  }
+
+  function readWishlist() {
+    try {
+      const value = JSON.parse(localStorage.getItem('fashionhub-demo-wishlist-v2'));
+      return new Set(Array.isArray(value) ? value.map(Number) : []);
+    } catch (_) {
+      return new Set();
+    }
+  }
+
+  function money(value, data) {
+    const symbol = data?.store?.currencySymbol || '৳';
+    return `${symbol}${new Intl.NumberFormat('en-BD', { maximumFractionDigits: 0 }).format(Number(value || 0))}`;
+  }
+
+  function stars(rating) {
+    const rounded = Math.max(0, Math.min(5, Math.round(Number(rating || 0))));
+    return `${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}`;
+  }
+
+  function badgeClass(product) {
+    if (product.type === 'digital') return 'product-badge--digital';
+    const badge = String(product.badge || '').toLowerCase();
+    if (badge === 'new' || badge === 'best') return 'product-badge--new';
+    return '';
+  }
+
+  function carouselProductCard(product, data, compact = false) {
+    const wished = readWishlist().has(Number(product.id));
+    return `
+      <article class="product-card${compact ? ' product-card--compact' : ''}" data-product-id="${Number(product.id)}">
+        <div class="product-card__media">
+          <span class="product-badge ${badgeClass(product)}">${esc(product.badge || '')}</span>
+          <button class="product-card__wish${wished ? ' is-active' : ''}" type="button" data-action="toggle-wishlist" data-product-id="${Number(product.id)}" aria-label="${wished ? 'Remove from' : 'Add to'} wishlist" aria-pressed="${wished}">${icon('heart')}</button>
+          <img src="${esc(product.image)}" width="720" height="720" loading="lazy" decoding="async" alt="${esc(product.name)}">
+          <button class="product-card__quick" type="button" data-action="quick-view" data-product-id="${Number(product.id)}">${icon('eye')} Quick view</button>
+        </div>
+        <div class="product-card__body">
+          <span class="product-card__category">${esc(product.type === 'digital' ? `Digital • ${product.category}` : product.category)}</span>
+          <h3><a href="#" data-action="quick-view" data-product-id="${Number(product.id)}">${esc(product.name)}</a></h3>
+          <div class="product-card__rating"><span>${stars(product.rating)}</span><small>(${esc(product.reviews)})</small></div>
+          <div class="product-card__footer">
+            <div class="product-price"><strong>${money(product.price, data)}</strong>${product.oldPrice ? `<del>${money(product.oldPrice, data)}</del>` : ''}</div>
+            <button class="add-button" type="button" data-action="add-cart" data-product-id="${Number(product.id)}" aria-label="Add ${esc(product.name)} to cart">${icon('plus')}</button>
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function prioritizedProducts(data, preferredIds, fallbackProducts, limit) {
+    const products = Array.isArray(data?.products) ? data.products : [];
+    const byId = new Map(products.map(product => [Number(product.id), product]));
+    const seen = new Set();
+    const result = [];
+    const push = product => {
+      const id = Number(product?.id);
+      if (!id || seen.has(id) || result.length >= limit) return;
+      seen.add(id);
+      result.push(product);
+    };
+    (preferredIds || []).forEach(id => push(byId.get(Number(id))));
+    (fallbackProducts || []).forEach(push);
+    products.forEach(push);
+    return result.slice(0, limit);
+  }
+
+  function expandHomepageProductRails() {
+    if (!isHomepage() || !homepageReady()) return;
+    const data = getStoreData();
+    if (!data?.products?.length || !data.productGroups) return;
+
+    const allProducts = [...data.products];
+    const discounted = allProducts
+      .filter(product => Number(product.oldPrice || 0) > Number(product.price || 0))
+      .sort((a, b) => ((Number(b.oldPrice) - Number(b.price)) / Number(b.oldPrice || 1)) - ((Number(a.oldPrice) - Number(a.price)) / Number(a.oldPrice || 1)));
+    const newest = [...allProducts].reverse();
+
+    const configs = [
+      { id: 'popularRail', preferred: data.productGroups.popular, fallback: allProducts.filter(product => product.type !== 'digital'), limit: 18, compact: false },
+      { id: 'flashRail', preferred: data.productGroups.flash, fallback: discounted, limit: 16, compact: true },
+      { id: 'newRail', preferred: data.productGroups.new, fallback: newest, limit: 18, compact: true }
+    ];
+
+    configs.forEach(config => {
+      const rail = document.getElementById(config.id);
+      if (!rail || rail.dataset.expandedProducts === '1') return;
+      const products = prioritizedProducts(data, config.preferred, config.fallback, config.limit);
+      rail.innerHTML = products.map(product => carouselProductCard(product, data, config.compact)).join('');
+      rail.dataset.expandedProducts = '1';
+    });
+  }
+
+  function markLoopClone(node) {
+    node.dataset.loopClone = '1';
+    node.setAttribute('aria-hidden', 'true');
+    node.querySelectorAll('a,button,input,select,textarea,[tabindex]').forEach(control => control.setAttribute('tabindex', '-1'));
+    return node;
+  }
+
+  function setupInfiniteRail(rail, { autoplay = true } = {}) {
+    if (!rail || rail.dataset.infiniteReady === '1' || rail.classList.contains('is-grid')) return;
+    const originals = Array.from(rail.children).filter(node => node.nodeType === 1 && node.dataset.loopClone !== '1');
+    if (originals.length < 2) return;
+
+    const before = document.createDocumentFragment();
+    const after = document.createDocumentFragment();
+    originals.forEach(node => before.appendChild(markLoopClone(node.cloneNode(true))));
+    originals.forEach(node => after.appendChild(markLoopClone(node.cloneNode(true))));
+    rail.prepend(before);
+    rail.append(after);
+    rail.dataset.infiniteReady = '1';
+
+    let cycleWidth = 0;
+    let middleStart = 0;
+    let afterStart = 0;
+    let scrollTimer = 0;
+    let autoTimer = 0;
+    let paused = false;
+    let moving = false;
+
+    const measure = () => {
+      const children = Array.from(rail.children);
+      const count = originals.length;
+      const middleFirst = children[count];
+      const afterFirst = children[count * 2];
+      if (!middleFirst || !afterFirst) return false;
+      middleStart = middleFirst.offsetLeft;
+      afterStart = afterFirst.offsetLeft;
+      cycleWidth = afterStart - middleStart;
+      return cycleWidth > 0;
+    };
+
+    const center = () => {
+      if (!measure()) return;
+      rail.scrollLeft = middleStart;
+    };
+
+    const normalize = () => {
+      if (!cycleWidth && !measure()) return;
+      const card = rail.querySelector('.product-card,.review-card');
+      const buffer = Math.max(24, (card?.getBoundingClientRect().width || 80) * .45);
+      if (rail.scrollLeft < middleStart - buffer) rail.scrollLeft += cycleWidth;
+      else if (rail.scrollLeft >= afterStart - buffer) rail.scrollLeft -= cycleWidth;
+    };
+
+    const stepSize = () => {
+      const first = rail.querySelector('.product-card,.review-card');
+      if (!first) return Math.max(220, rail.clientWidth * .72);
+      const style = getComputedStyle(rail);
+      const gap = parseFloat(style.columnGap || style.gap || 0) || 0;
+      const itemWidth = first.getBoundingClientRect().width + gap;
+      const visible = Math.max(1, Math.floor((rail.clientWidth + gap) / itemWidth));
+      return itemWidth * Math.max(1, visible - 1);
+    };
+
+    const move = direction => {
+      if (rail.classList.contains('is-grid')) return;
+      moving = true;
+      rail.scrollBy({ left: direction * stepSize(), behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        moving = false;
+        normalize();
+      }, reduceMotion.matches ? 30 : 620);
+    };
+
+    rail._fashionHubMove = move;
+    rail._fashionHubRecenter = () => requestAnimationFrame(center);
+
+    const scheduleAuto = () => {
+      clearInterval(autoTimer);
+      if (!autoplay || reduceMotion.matches) return;
+      autoTimer = setInterval(() => {
+        if (paused || document.hidden || rail.classList.contains('is-grid')) return;
+        move(1);
+      }, 5200);
+    };
+
+    const pause = () => { paused = true; };
+    const resume = () => { paused = false; };
+    rail.addEventListener('mouseenter', pause, { passive: true });
+    rail.addEventListener('mouseleave', resume, { passive: true });
+    rail.addEventListener('focusin', pause);
+    rail.addEventListener('focusout', resume);
+    rail.addEventListener('pointerdown', pause, { passive: true });
+    rail.addEventListener('pointerup', resume, { passive: true });
+    rail.addEventListener('pointercancel', resume, { passive: true });
+    rail.addEventListener('scroll', () => {
+      if (moving) return;
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(normalize, 110);
+    }, { passive: true });
+
+    requestAnimationFrame(() => requestAnimationFrame(center));
+    scheduleAuto();
+  }
+
+  function setupCommerceCarousels() {
+    if (!isHomepage() || !homepageReady()) return;
+    expandHomepageProductRails();
+    ['popularRail', 'flashRail', 'newRail', 'reviewRail'].forEach(id => setupInfiniteRail(document.getElementById(id), { autoplay: true }));
+
+    if (document.documentElement.dataset.carouselControlsBound === '1') return;
+    document.documentElement.dataset.carouselControlsBound = '1';
+
+    document.addEventListener('click', event => {
+      const button = event.target.closest('[data-rail-prev],[data-rail-next]');
+      if (button) {
+        const id = button.dataset.railNext || button.dataset.railPrev;
+        const rail = document.getElementById(id);
+        if (rail?._fashionHubMove) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          rail._fashionHubMove(button.hasAttribute('data-rail-next') ? 1 : -1);
+          return;
+        }
+      }
+
+      const viewButton = event.target.closest('[data-view-target][data-view]');
+      if (!viewButton) return;
+      const rail = document.getElementById(viewButton.dataset.viewTarget);
+      if (!rail?._fashionHubRecenter || viewButton.dataset.view !== 'slider') return;
+      setTimeout(() => rail._fashionHubRecenter(), 0);
+    }, true);
+  }
+
   function bindOutsideClose() {
     if (document.documentElement.dataset.categoryOutsideBound === '1') return;
     document.documentElement.dataset.categoryOutsideBound = '1';
@@ -350,7 +575,7 @@
 
     const mark = root => {
       root.querySelectorAll?.(selector).forEach((element, index) => {
-        if (element.classList.contains('scroll-reveal') || !shouldReveal(element)) return;
+        if (element.dataset.loopClone === '1' || element.classList.contains('scroll-reveal') || !shouldReveal(element)) return;
         element.classList.add('scroll-reveal');
         element.style.setProperty('--reveal-delay', `${Math.min(index % 4, 3) * 45}ms`);
         io.observe(element);
@@ -363,7 +588,7 @@
       if (!main) return;
       const mutationObserver = new MutationObserver(records => {
         records.forEach(record => record.addedNodes.forEach(node => {
-          if (node.nodeType !== 1) return;
+          if (node.nodeType !== 1 || node.dataset?.loopClone === '1') return;
           if (node.matches?.(selector) && shouldReveal(node)) {
             node.classList.add('scroll-reveal');
             io.observe(node);
@@ -394,6 +619,8 @@
     removeRedundantAppleParts();
     restructureDesktopNav();
     buildDesktopCategorySlider();
+    setupCommerceCarousels();
+    document.documentElement.classList.add('ui-ready');
   }
 
   function waitForHomepageReady() {
@@ -418,14 +645,16 @@
     observeLateMenus();
     waitForHomepageReady();
     setupScrollReveal();
-    document.documentElement.classList.add('ui-ready');
 
     addEventListener('resize', () => {
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => {
-        if (!homepageReady() || !isDesktop()) return;
-        restructureDesktopNav();
-        positionSlider(document.getElementById('desktopCategoryMenu'));
+        if (!homepageReady()) return;
+        if (isDesktop()) {
+          restructureDesktopNav();
+          positionSlider(document.getElementById('desktopCategoryMenu'));
+        }
+        document.querySelectorAll('[data-infinite-ready="1"]').forEach(rail => rail._fashionHubRecenter?.());
       });
     }, { passive: true });
   }
