@@ -25,10 +25,20 @@
       window.FASHIONHUB_DATA.categoryTree = window.FASHIONHUB_DATA.categoryTree.filter(item => String(item?.label || '').toUpperCase() !== 'APPLE PARTS');
     }
 
+    let removedActive = false;
     document.querySelectorAll('[data-cat-index], .category-mega > ul > li, [data-drawer-panel="categories"] .mobile-tree > li').forEach(el => {
       const label = el.matches('[data-cat-index]') ? text(el.querySelector('span')) : text(el.querySelector(':scope > a, :scope > .mobile-tree__row > a'));
-      if (label.toUpperCase() === 'APPLE PARTS') el.remove();
+      if (label.toUpperCase() === 'APPLE PARTS') {
+        removedActive ||= el.classList.contains('is-active');
+        el.remove();
+      }
     });
+
+    const menu = document.getElementById('desktopCategoryMenu');
+    const first = menu?.querySelector('[data-cat-index]');
+    if (first && (removedActive || !menu.querySelector('[data-cat-index].is-active'))) {
+      first.click();
+    }
   }
 
   function restructureDesktopNav() {
@@ -38,21 +48,22 @@
     const nav = navWrap?.querySelector('.primary-nav');
     const launcher = document.querySelector('.category-launcher.desktop-only');
     if (!header || !navWrap || !nav || !launcher) return;
+    if (navWrap.dataset.desktopStructured === '1') return;
 
-    if (launcher.parentElement !== nav) nav.prepend(launcher);
-    if (navWrap.previousElementSibling !== header) header.insertAdjacentElement('afterend', navWrap);
+    nav.prepend(launcher);
+    header.insertAdjacentElement('afterend', navWrap);
 
-    if (!navWrap.previousElementSibling?.classList?.contains('nav-sticky-sentinel')) {
-      const sentinel = document.createElement('div');
-      sentinel.className = 'nav-sticky-sentinel';
-      sentinel.setAttribute('aria-hidden', 'true');
-      navWrap.before(sentinel);
-      const stickyObserver = new IntersectionObserver(entries => {
-        const entry = entries[0];
-        navWrap.classList.toggle('is-stuck', !entry.isIntersecting && entry.boundingClientRect.top < 0);
-      }, { threshold: 0 });
-      stickyObserver.observe(sentinel);
-    }
+    const sentinel = document.createElement('div');
+    sentinel.className = 'nav-sticky-sentinel';
+    sentinel.setAttribute('aria-hidden', 'true');
+    navWrap.before(sentinel);
+    navWrap.dataset.desktopStructured = '1';
+
+    const stickyObserver = new IntersectionObserver(entries => {
+      const entry = entries[0];
+      navWrap.classList.toggle('is-stuck', !entry.isIntersecting && entry.boundingClientRect.top < 0);
+    }, { threshold: 0 });
+    stickyObserver.observe(sentinel);
   }
 
   function decorateLongGroups(root = document) {
@@ -104,8 +115,7 @@
     if (document.documentElement.dataset.categoryOutsideBound === '1') return;
     document.documentElement.dataset.categoryOutsideBound = '1';
     document.addEventListener('pointerdown', event => {
-      const launcher = event.target.closest('.category-launcher');
-      if (launcher) return;
+      if (event.target.closest('.category-launcher')) return;
       const menu = document.getElementById('desktopCategoryMenu');
       const button = document.querySelector('[data-action="toggle-categories"]');
       menu?.classList.remove('is-open');
@@ -168,6 +178,17 @@
     }
   }
 
+  function observeLateMenus() {
+    if (document.documentElement.dataset.menuCleanupObserver === '1') return;
+    document.documentElement.dataset.menuCleanupObserver = '1';
+    const mo = new MutationObserver(records => {
+      if (!records.some(record => [...record.addedNodes].some(node => node.nodeType === 1))) return;
+      removeRedundantAppleParts();
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    window.setTimeout(() => mo.disconnect(), 5000);
+  }
+
   function init() {
     ensureFavicon();
     removeRedundantAppleParts();
@@ -176,6 +197,7 @@
     decorateLongGroups(document);
     bindOutsideClose();
     setupScrollReveal();
+    observeLateMenus();
 
     addEventListener('resize', () => {
       clearTimeout(hoverTimer);
