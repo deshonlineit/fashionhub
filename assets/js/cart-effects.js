@@ -14,6 +14,32 @@
   const rootUrl = new URL('../../', scriptUrl);
   const rootPath = rootUrl.pathname;
 
+  const NativeURLSearchParams = window.URLSearchParams;
+  const routeLeaf = decodeURIComponent((location.pathname.split('/').pop() || '').trim());
+
+  function syntheticRouteSearch() {
+    const params = new NativeURLSearchParams();
+    let match;
+    if ((match = routeLeaf.match(/^product-(?:.*-)?p(\d+)$/i))) params.set('id', match[1]);
+    else if ((match = routeLeaf.match(/^category-(.+)$/i))) params.set('cat', match[1]);
+    else if ((match = routeLeaf.match(/^search-(.+)$/i))) params.set('q', match[1].replace(/-/g, ' '));
+    else if ((match = routeLeaf.match(/^blog-(?:.*-)?p(\d+)$/i))) params.set('post', match[1]);
+    else if ((match = routeLeaf.match(/^blog-post-(\d+)$/i))) params.set('post', match[1]);
+    else if (/^new-arrivals$/i.test(routeLeaf)) params.set('sort', 'new');
+    else if (/^deals$/i.test(routeLeaf)) params.set('type', 'deals');
+    return params.toString();
+  }
+
+  const routeSearch = syntheticRouteSearch();
+  if (!location.search && routeSearch) {
+    function RouteAwareURLSearchParams(init) {
+      return new NativeURLSearchParams(init === location.search ? routeSearch : init);
+    }
+    RouteAwareURLSearchParams.prototype = NativeURLSearchParams.prototype;
+    Object.setPrototypeOf(RouteAwareURLSearchParams, NativeURLSearchParams);
+    window.URLSearchParams = RouteAwareURLSearchParams;
+  }
+
   const svg = name => `<svg aria-hidden="true"><use href="#i-${name}"></use></svg>`;
   const slugify = value => String(value || '')
     .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
