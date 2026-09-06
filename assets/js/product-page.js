@@ -9,6 +9,11 @@
   const product = products.find(item => Number(item.id) === id) || products[0];
   if (!product) return;
 
+  const slugify = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+  const base = location.pathname.slice(0, location.pathname.lastIndexOf('/') + 1);
+  const cleanPath = `${base}product-${slugify(product.name) || 'product'}-p${product.id}`;
+  if (location.pathname !== cleanPath) history.replaceState(history.state, '', `${cleanPath}${location.hash}`);
+
   const description = String(product.description || '').trim().slice(0, 158);
   document.title = `${product.name} — FashionHub`;
 
@@ -26,13 +31,13 @@
     canonical.rel = 'canonical';
     document.head.append(canonical);
   }
-  canonical.href = `${location.origin}${location.pathname}`;
+  canonical.href = `${location.origin}${cleanPath}`;
 
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    image: [new URL(product.image, location.href).href],
+    image: [new URL(product.image, `${location.origin}${base}`).href],
     description: product.description,
     sku: `FH-${String(product.id).padStart(4, '0')}`,
     category: product.category,
@@ -50,8 +55,7 @@
     }
   };
 
-  const oldSchema = document.getElementById('productStructuredData');
-  oldSchema?.remove();
+  document.getElementById('productStructuredData')?.remove();
   const jsonLd = document.createElement('script');
   jsonLd.id = 'productStructuredData';
   jsonLd.type = 'application/ld+json';
