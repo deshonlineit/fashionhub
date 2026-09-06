@@ -1,157 +1,116 @@
-/* FashionHub full sticky header — smooth compact-on-scroll behavior */
+/* FashionHub sticky navigation row only */
+
+/* The logo/search/account header scrolls away normally. */
 .site-header{
-  position:sticky!important;
-  top:0!important;
-  z-index:220!important;
-  width:100%;
-  overflow:visible!important;
-  background:rgba(255,255,255,.975)!important;
-  border-bottom:1px solid rgba(233,233,239,.88)!important;
-  box-shadow:0 0 0 rgba(25,29,42,0);
-  backdrop-filter:saturate(165%) blur(14px);
-  -webkit-backdrop-filter:saturate(165%) blur(14px);
-  transform:translateZ(0);
-  transition:
-    background-color .72s cubic-bezier(.2,.7,.2,1),
-    box-shadow .72s cubic-bezier(.2,.7,.2,1),
-    border-color .72s cubic-bezier(.2,.7,.2,1),
-    backdrop-filter .72s cubic-bezier(.2,.7,.2,1),
-    transform .72s cubic-bezier(.2,.7,.2,1)!important;
-}
-
-.site-header.is-sticky-active{
-  background:rgba(255,255,255,.92)!important;
-  border-bottom-color:rgba(220,222,231,.88)!important;
-  box-shadow:0 15px 42px rgba(24,28,40,.12);
-  backdrop-filter:saturate(185%) blur(20px);
-  -webkit-backdrop-filter:saturate(185%) blur(20px);
-}
-
-/* The nav is part of the sticky header, not a second independent sticky layer. */
-.site-header .primary-nav-wrap{
   position:relative!important;
   top:auto!important;
-  z-index:225!important;
+  z-index:80!important;
   overflow:visible!important;
-  background:rgba(255,255,255,.78)!important;
-  border-top:1px solid rgba(243,243,246,.95)!important;
-  border-bottom:0!important;
+  background:#fff!important;
   box-shadow:none!important;
   backdrop-filter:none!important;
-  transition:
-    background-color .68s cubic-bezier(.2,.7,.2,1),
-    min-height .68s cubic-bezier(.2,.7,.2,1),
-    border-color .68s cubic-bezier(.2,.7,.2,1)!important;
+  -webkit-backdrop-filter:none!important;
 }
 
-.site-header.is-sticky-active .primary-nav-wrap{
-  background:rgba(255,255,255,.52)!important;
-  border-top-color:rgba(232,233,239,.76)!important;
-}
-
-/* Prevent the old standalone-nav sticky state from adding a second shadow. */
-.site-header .primary-nav-wrap.is-stuck{
-  background:inherit!important;
-  box-shadow:none!important;
-  animation:none!important;
-  transform:none!important;
-}
-
-.header-main{
-  transition:
-    height .72s cubic-bezier(.2,.7,.2,1),
-    gap .72s cubic-bezier(.2,.7,.2,1),
-    padding .72s cubic-bezier(.2,.7,.2,1)!important;
-}
-
-.brand,
-.brand__mark,
-.site-search,
-.header-action,
-.primary-nav,
-.primary-nav a,
-.category-launcher__button{
-  transition:
-    transform .65s cubic-bezier(.2,.7,.2,1),
-    height .65s cubic-bezier(.2,.7,.2,1),
-    min-height .65s cubic-bezier(.2,.7,.2,1),
-    width .65s cubic-bezier(.2,.7,.2,1),
-    box-shadow .65s cubic-bezier(.2,.7,.2,1),
-    background-color .55s ease,
-    color .55s ease!important;
+.nav-sticky-sentinel{
+  width:100%;
+  height:0;
+  pointer-events:none;
 }
 
 @media (min-width:981px){
-  .site-header .header-main{
-    height:var(--header-height);
-  }
-
-  .site-header.is-sticky-active .header-main{
-    height:clamp(58px,5.1vw,68px);
-  }
-
-  .site-header.is-sticky-active .brand{
-    transform:scale(.94);
-    transform-origin:left center;
-  }
-
-  .site-header.is-sticky-active .brand__mark{
-    box-shadow:0 7px 20px rgba(244,50,104,.17);
-  }
-
-  .site-header.is-sticky-active .site-search{
-    height:42px;
-  }
-
-  .site-header .primary-nav{
+  /* Only this lower menu row remains visible while the page scrolls. */
+  .primary-nav-wrap{
+    position:sticky!important;
+    top:0!important;
+    z-index:220!important;
+    width:100%;
     min-height:54px;
+    overflow:visible!important;
+    background:rgba(255,255,255,.975)!important;
+    border-top:1px solid rgba(243,243,246,.96)!important;
+    border-bottom:1px solid rgba(232,233,239,.92)!important;
+    box-shadow:0 0 0 rgba(23,27,40,0);
+    backdrop-filter:saturate(165%) blur(12px);
+    -webkit-backdrop-filter:saturate(165%) blur(12px);
+    transform:translateZ(0);
+    transition:
+      background-color .72s cubic-bezier(.2,.7,.2,1),
+      box-shadow .72s cubic-bezier(.2,.7,.2,1),
+      border-color .72s cubic-bezier(.2,.7,.2,1),
+      backdrop-filter .72s cubic-bezier(.2,.7,.2,1),
+      min-height .72s cubic-bezier(.2,.7,.2,1)!important;
   }
 
-  .site-header .primary-nav a{
+  .primary-nav-wrap.is-stuck{
+    min-height:50px;
+    background:rgba(255,255,255,.91)!important;
+    border-top-color:transparent!important;
+    border-bottom-color:rgba(220,222,231,.9)!important;
+    box-shadow:0 14px 38px rgba(24,28,40,.12);
+    backdrop-filter:saturate(185%) blur(20px);
+    -webkit-backdrop-filter:saturate(185%) blur(20px);
+    animation:fh-nav-arrive .68s cubic-bezier(.2,.7,.2,1) both;
+  }
+
+  @keyframes fh-nav-arrive{
+    from{opacity:.86;transform:translateY(-8px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  .primary-nav{
     min-height:54px;
+    transition:min-height .72s cubic-bezier(.2,.7,.2,1),gap .72s cubic-bezier(.2,.7,.2,1)!important;
   }
 
-  .site-header.is-sticky-active .primary-nav{
-    min-height:48px;
+  .primary-nav a{
+    min-height:54px;
+    transition:min-height .72s cubic-bezier(.2,.7,.2,1),color .45s ease,border-color .45s ease,transform .55s cubic-bezier(.2,.7,.2,1)!important;
   }
 
-  .site-header.is-sticky-active .primary-nav a{
-    min-height:48px;
+  .primary-nav-wrap.is-stuck .primary-nav,
+  .primary-nav-wrap.is-stuck .primary-nav a{
+    min-height:50px;
   }
 
-  .site-header.is-sticky-active .category-launcher__button{
-    height:38px;
-    box-shadow:0 7px 20px rgba(244,50,104,.17);
-  }
-
-  /* All Categories belongs in the lower menu row while the entire header stays sticky. */
-  .site-header .primary-nav>.category-launcher{
+  .primary-nav>.category-launcher{
     position:relative!important;
     left:auto!important;
     top:auto!important;
-    z-index:235!important;
+    z-index:230!important;
     flex:0 0 auto;
+    height:40px;
     display:flex;
     align-items:center;
   }
 
-  .site-header .category-mega{
+  .category-launcher__button{
+    transition:height .68s cubic-bezier(.2,.7,.2,1),transform .55s cubic-bezier(.2,.7,.2,1),box-shadow .55s ease,background-color .45s ease!important;
+  }
+
+  .primary-nav-wrap.is-stuck .category-launcher__button{
+    height:38px;
+    box-shadow:0 8px 22px rgba(244,50,104,.18);
+  }
+
+  /* Keep dropdowns above the sticky row and page content. */
+  .category-launcher,
+  .category-mega,
+  .primary-nav ul ul{
     z-index:240!important;
   }
 }
 
-/* Mobile already uses the compact header; add only the premium scroll state. */
+/* Mobile has no desktop menu row, so do not make the whole mobile header sticky here. */
 @media (max-width:980px){
-  .site-header.is-sticky-active{
-    box-shadow:0 11px 30px rgba(24,28,40,.11);
-  }
+  .site-header{position:relative!important;top:auto!important}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .site-header,
-  .site-header *,
-  .site-header *::before,
-  .site-header *::after{
+  .primary-nav-wrap,
+  .primary-nav,
+  .primary-nav a,
+  .category-launcher__button{
     transition:none!important;
     animation:none!important;
   }
