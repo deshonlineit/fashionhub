@@ -3,8 +3,8 @@
 
   const CART_KEY = 'fashionhub-demo-cart-v2';
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  const addSelector = '[data-action="add-cart"][data-product-id]';
-  const cartMutationSelector = '[data-action="cart-remove"],[data-action="cart-decrease"],[data-action="cart-increase"]';
+  const addSelector = '[data-action="add-cart"][data-product-id],[data-action="add-product"][data-product-id]';
+  const cartMutationSelector = '[data-action="cart-remove"],[data-action="cart-minus"],[data-action="cart-plus"]';
   const svg = name => `<svg aria-hidden="true"><use href="#i-${name}"></use></svg>`;
   const pending = new Set();
 
@@ -60,9 +60,8 @@
     root.querySelectorAll?.(addSelector).forEach(button => buttons.push(button));
     buttons.forEach(button => {
       const id = String(button.dataset.productId);
-      const added = Number(cart[id] || 0) > 0;
-      if (pending.has(id) && !added) return;
-      renderButton(button, added);
+      if (pending.has(id)) return;
+      renderButton(button, Number(cart[id] || 0) > 0);
     });
   }
 
@@ -123,7 +122,7 @@
     target.classList.remove('fh-cart-hit');
     void target.offsetWidth;
     target.classList.add('fh-cart-hit');
-    setTimeout(() => target.classList.remove('fh-cart-hit'), 760);
+    setTimeout(() => target.classList.remove('fh-cart-hit'), 860);
   }
 
   function pulseProduct(target) {
@@ -132,7 +131,7 @@
     card.classList.remove('fh-product-return-hit');
     void card.offsetWidth;
     card.classList.add('fh-product-return-hit');
-    setTimeout(() => card.classList.remove('fh-product-return-hit'), 900);
+    setTimeout(() => card.classList.remove('fh-product-return-hit'), 980);
   }
 
   function flyBetween(sourceElement, destinationElement, direction = 'to-cart') {
@@ -151,7 +150,7 @@
         return;
       }
 
-      const size = Math.max(54, Math.min(92, source.width, source.height));
+      const size = Math.max(54, Math.min(90, source.width, source.height));
       const startX = source.left + source.width / 2 - size / 2;
       const startY = source.top + source.height / 2 - size / 2;
       const endX = destination.left + destination.width / 2 - size / 2;
@@ -172,16 +171,16 @@
       });
       document.body.appendChild(flyer);
 
-      const duration = reverse ? 900 : 1080;
-      const arc = reverse ? -34 : -66;
+      const duration = reverse ? 1200 : 1500;
+      const arc = reverse ? -42 : -88;
       const animation = flyer.animate([
         { transform: 'translate3d(0,0,0) scale(1) rotate(0deg)', opacity: 1 },
-        { transform: `translate3d(${dx * .34}px,${dy * .24 + arc}px,0) scale(${reverse ? .9 : .86}) rotate(${reverse ? '3deg' : '-4deg'})`, opacity: .98, offset: .34 },
-        { transform: `translate3d(${dx * .72}px,${dy * .68 + arc * .35}px,0) scale(${reverse ? .76 : .52}) rotate(${reverse ? '-2deg' : '2deg'})`, opacity: .9, offset: .72 },
-        { transform: `translate3d(${dx}px,${dy}px,0) scale(${reverse ? .62 : .14}) rotate(0deg)`, opacity: reverse ? .18 : .06 }
+        { transform: `translate3d(${dx * .28}px,${dy * .18 + arc}px,0) scale(${reverse ? .94 : .9}) rotate(${reverse ? '2deg' : '-3deg'})`, opacity: 1, offset: .28 },
+        { transform: `translate3d(${dx * .68}px,${dy * .62 + arc * .36}px,0) scale(${reverse ? .8 : .58}) rotate(${reverse ? '-2deg' : '2deg'})`, opacity: .94, offset: .7 },
+        { transform: `translate3d(${dx}px,${dy}px,0) scale(${reverse ? .62 : .13}) rotate(0deg)`, opacity: reverse ? .18 : .05 }
       ], {
         duration,
-        easing: 'cubic-bezier(.18,.78,.2,1)',
+        easing: 'cubic-bezier(.16,.76,.18,1)',
         fill: 'forwards'
       });
 
@@ -214,7 +213,7 @@
 
     const actions = document.createElement('div');
     actions.className = 'fh-sticky-actions';
-    actions.setAttribute('aria-label', 'Sticky account actions');
+    actions.setAttribute('aria-label', 'Sticky account and cart actions');
     actions.innerHTML = `
       <a class="fh-sticky-action" href="account.html" aria-label="Account" title="Account">${svg('user')}</a>
       <button class="fh-sticky-action fh-sticky-cart-action" type="button" data-action="open-cart" aria-label="Open shopping cart" title="Cart">
@@ -238,7 +237,7 @@
       observer.disconnect();
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => observer.disconnect(), 3500);
+    setTimeout(() => observer.disconnect(), 5000);
   }
 
   function openMiniCart() {
@@ -261,11 +260,11 @@
     setTimeout(() => {
       opener.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
       drawer.classList.add('fh-cart-arrive');
-      setTimeout(() => drawer.classList.remove('fh-cart-arrive'), 700);
-    }, wasModalOpen ? 180 : 0);
+      setTimeout(() => drawer.classList.remove('fh-cart-arrive'), 900);
+    }, wasModalOpen ? 220 : 0);
   }
 
-  function afterCartChange(delay = 60) {
+  function afterCartChange(delay = 90) {
     setTimeout(() => {
       syncButtons();
       syncStickyCount();
@@ -281,10 +280,12 @@
     markAdding(id);
 
     flyBetween(image, target, 'to-cart').then(() => {
-      pending.delete(id);
-      syncButtons();
-      syncStickyCount();
-      setTimeout(openMiniCart, 260);
+      setTimeout(() => {
+        pending.delete(id);
+        syncButtons();
+        syncStickyCount();
+        setTimeout(openMiniCart, 360);
+      }, 120);
     });
   }
 
@@ -297,11 +298,32 @@
     if (source && destination) flyBetween(source, destination, 'to-product');
   }
 
+  function handleThumbnail(button) {
+    const gallery = button.closest('.product-gallery');
+    const thumbImage = button.querySelector('img');
+    const main = gallery?.querySelector('#productMainImg,.product-main-image img');
+    if (!gallery || !thumbImage || !main) return;
+    gallery.querySelectorAll('.product-thumb').forEach(thumb => thumb.classList.toggle('is-active', thumb === button));
+    main.src = thumbImage.currentSrc || thumbImage.src;
+    main.alt = thumbImage.alt || main.alt;
+    main.style.transform = thumbImage.style.transform || 'none';
+    main.classList.remove('is-changing');
+    void main.offsetWidth;
+    main.classList.add('is-changing');
+    setTimeout(() => main.classList.remove('is-changing'), 420);
+  }
+
   function bind() {
     syncButtons();
     watchStickyActions();
 
     document.addEventListener('click', event => {
+      const thumb = event.target.closest('[data-action="thumb"]');
+      if (thumb) {
+        handleThumbnail(thumb);
+        return;
+      }
+
       const addButton = event.target.closest(addSelector);
       if (addButton && !addButton.disabled) {
         handleAdd(addButton);
@@ -311,13 +333,13 @@
       const remove = event.target.closest('[data-action="cart-remove"]');
       if (remove) {
         handleReturn(remove);
-        afterCartChange(100);
+        afterCartChange(120);
         return;
       }
 
-      const decrease = event.target.closest('[data-action="cart-decrease"]');
+      const decrease = event.target.closest('[data-action="cart-minus"]');
       if (decrease && cartQuantity(decrease.dataset.productId) <= 1) handleReturn(decrease);
-      if (event.target.closest(cartMutationSelector)) afterCartChange(100);
+      if (event.target.closest(cartMutationSelector)) afterCartChange(120);
     }, true);
 
     addEventListener('storage', event => {
