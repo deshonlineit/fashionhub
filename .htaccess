@@ -50,11 +50,13 @@ AddDefaultCharset UTF-8
     Header add Link "<assets/js/config.js>; rel=preload; as=script"
     Header add Link "<data/home-data.js>; rel=preload; as=script"
     Header add Link "<assets/js/category-hover.js>; rel=preload; as=script"
+    Header add Link "<assets/js/cart-effects.js>; rel=preload; as=script"
     Header add Link "<assets/css/nav-fix.css>; rel=preload; as=style"
     Header add Link "<assets/css/sticky-header.css>; rel=preload; as=style"
     Header add Link "<assets/css/desktop-category-slider.css>; rel=preload; as=style"
     Header add Link "<assets/css/premium.css>; rel=preload; as=style"
     Header add Link "<assets/css/product-carousel.css>; rel=preload; as=style"
+    Header add Link "<assets/css/cart-effects.css>; rel=preload; as=style"
   </FilesMatch>
   <Files "index.html">
     Header add Link "<assets/js/app.js>; rel=preload; as=script"
