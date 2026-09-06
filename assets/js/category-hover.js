@@ -12,12 +12,20 @@
   const homepageReady = () => !isHomepage() || document.documentElement.classList.contains('is-ready');
 
   function ensureFavicon() {
-    if (document.querySelector('link[rel~="icon"]')) return;
-    const link = document.createElement('link');
-    link.rel = 'icon';
-    link.type = 'image/svg+xml';
-    link.href = 'assets/images/favicon.svg';
-    document.head.appendChild(link);
+    if (!document.querySelector('link[rel~="icon"]')) {
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/svg+xml';
+      link.href = 'assets/images/favicon.svg';
+      document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('link[href="assets/css/sticky-header.css"]')) {
+      const style = document.createElement('link');
+      style.rel = 'stylesheet';
+      style.href = 'assets/css/sticky-header.css';
+      document.head.appendChild(style);
+    }
   }
 
   function removeRedundantAppleParts() {
@@ -48,7 +56,7 @@
     if (!isDesktop() || !homepageReady()) return;
 
     const header = document.querySelector('.site-header');
-    const navWrap = document.querySelector('.primary-nav-wrap');
+    const navWrap = header?.querySelector('.primary-nav-wrap') || document.querySelector('.primary-nav-wrap');
     const nav = navWrap?.querySelector('.primary-nav');
     const launcher = document.querySelector('.category-launcher.desktop-only');
     const categoryMenu = document.getElementById('desktopCategoryMenu');
@@ -57,25 +65,36 @@
     if (navWrap.dataset.desktopStructured === '1') return;
 
     /*
-     * Important: on the homepage app.js fills #desktopNav asynchronously.
-     * Moving the launcher into #desktopNav before app.js finishes causes
-     * renderNavigation() to delete the launcher and #desktopCategoryMenu.
-     * We therefore only relocate it after the homepage adds html.is-ready.
+     * app.js fills #desktopNav asynchronously on the homepage, so the launcher
+     * is moved only after html.is-ready. Keep the nav bar inside .site-header:
+     * the whole header now sticks as one stable component while scrolling.
      */
     nav.prepend(launcher);
-    header.insertAdjacentElement('afterend', navWrap);
-
-    const sentinel = document.createElement('div');
-    sentinel.className = 'nav-sticky-sentinel';
-    sentinel.setAttribute('aria-hidden', 'true');
-    navWrap.before(sentinel);
+    if (navWrap.parentElement !== header) header.appendChild(navWrap);
     navWrap.dataset.desktopStructured = '1';
+  }
 
-    const stickyObserver = new IntersectionObserver(entries => {
-      const entry = entries[0];
-      navWrap.classList.toggle('is-stuck', !entry.isIntersecting && entry.boundingClientRect.top < 0);
-    }, { threshold: 0 });
-    stickyObserver.observe(sentinel);
+  function setupStickyHeader() {
+    const header = document.querySelector('.site-header');
+    if (!header || header.dataset.stickyBound === '1') return;
+    header.dataset.stickyBound = '1';
+
+    let ticking = false;
+    const update = () => {
+      const active = window.scrollY > 24;
+      header.classList.toggle('is-sticky-active', active);
+      document.documentElement.classList.toggle('has-sticky-header', active);
+      ticking = false;
+    };
+
+    const requestUpdate = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+
+    update();
+    addEventListener('scroll', requestUpdate, { passive: true });
   }
 
   function decorateLongGroups(root = document) {
@@ -207,6 +226,7 @@
     restructureDesktopNav();
     bindMegaIntent();
     decorateLongGroups(document);
+    setupStickyHeader();
   }
 
   function waitForHomepageReady() {
@@ -230,6 +250,7 @@
     removeRedundantAppleParts();
     bindOutsideClose();
     setupScrollReveal();
+    setupStickyHeader();
     observeLateMenus();
     waitForHomepageReady();
 
