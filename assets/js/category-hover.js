@@ -26,6 +26,13 @@
       style.href = 'assets/css/sticky-header.css';
       document.head.appendChild(style);
     }
+
+    if (!document.querySelector('link[href="assets/css/mega-hover-fix.css"]')) {
+      const style = document.createElement('link');
+      style.rel = 'stylesheet';
+      style.href = 'assets/css/mega-hover-fix.css';
+      document.head.appendChild(style);
+    }
   }
 
   function removeRedundantAppleParts() {
@@ -96,6 +103,59 @@
     });
   }
 
+  function clearHomepageMegaParent(menu = document.getElementById('desktopCategoryMenu')) {
+    menu?.querySelectorAll(':scope > ul > li.mega-parent-active').forEach(item => item.classList.remove('mega-parent-active'));
+  }
+
+  function setHomepageMegaParent(item) {
+    const menu = document.getElementById('desktopCategoryMenu');
+    if (!menu || !item || item.parentElement !== menu.querySelector(':scope > ul')) return;
+    if (!item.querySelector(':scope > ul')) return;
+
+    menu.querySelectorAll(':scope > ul > li.mega-parent-active').forEach(other => {
+      if (other !== item) other.classList.remove('mega-parent-active');
+    });
+    item.classList.add('mega-parent-active');
+  }
+
+  function bindHomepageMegaLinks() {
+    const menu = document.getElementById('desktopCategoryMenu');
+    if (!menu || menu.querySelector('.category-mega__list') || menu.dataset.homeMegaBound === '1') return;
+    menu.dataset.homeMegaBound = '1';
+
+    const bindParents = () => {
+      menu.querySelectorAll(':scope > ul > li').forEach(item => {
+        const anchor = item.querySelector(':scope > a');
+        const child = item.querySelector(':scope > ul');
+        if (!anchor || !child || anchor.dataset.homeMegaLinkBound === '1') return;
+        anchor.dataset.homeMegaLinkBound = '1';
+
+        const activate = () => {
+          if (!isDesktop()) return;
+          clearTimeout(hoverTimer);
+          hoverTimer = window.setTimeout(() => setHomepageMegaParent(item), 120);
+        };
+
+        anchor.addEventListener('pointerenter', activate);
+        anchor.addEventListener('pointerleave', () => clearTimeout(hoverTimer));
+        anchor.addEventListener('focus', () => setHomepageMegaParent(item));
+        anchor.addEventListener('click', event => {
+          if (!isDesktop()) return;
+          event.preventDefault();
+          clearTimeout(hoverTimer);
+          setHomepageMegaParent(item);
+        });
+
+        child.addEventListener('pointerenter', () => clearTimeout(hoverTimer));
+      });
+    };
+
+    bindParents();
+
+    const observer = new MutationObserver(() => bindParents());
+    observer.observe(menu, { childList: true, subtree: true });
+  }
+
   function activateCategory(item) {
     if (!item || item.classList.contains('is-active')) return;
     item.click();
@@ -115,7 +175,12 @@
         item.addEventListener('pointerenter', () => {
           if (!isDesktop()) return;
           clearTimeout(hoverTimer);
-          hoverTimer = window.setTimeout(() => activateCategory(item), 180);
+          /*
+           * A deliberate hover delay prevents a diagonal trip from the parent
+           * rail into the right-side child panel from accidentally selecting
+           * another category on the way across.
+           */
+          hoverTimer = window.setTimeout(() => activateCategory(item), 280);
         });
         item.addEventListener('pointerleave', () => clearTimeout(hoverTimer));
         item.addEventListener('focus', () => activateCategory(item));
@@ -136,14 +201,29 @@
   function bindOutsideClose() {
     if (document.documentElement.dataset.categoryOutsideBound === '1') return;
     document.documentElement.dataset.categoryOutsideBound = '1';
+
     document.addEventListener('pointerdown', event => {
       if (event.target.closest('.category-launcher')) return;
       const menu = document.getElementById('desktopCategoryMenu');
       const button = document.querySelector('[data-action="toggle-categories"]');
+      clearTimeout(hoverTimer);
+      clearHomepageMegaParent(menu);
       menu?.classList.remove('is-open');
       document.querySelector('.category-launcher')?.classList.remove('is-open');
       button?.setAttribute('aria-expanded', 'false');
     }, { passive: true });
+
+    document.addEventListener('click', event => {
+      const toggle = event.target.closest('[data-action="toggle-categories"]');
+      if (!toggle) return;
+      requestAnimationFrame(() => {
+        const launcher = toggle.closest('.category-launcher');
+        if (!launcher?.classList.contains('is-open')) {
+          clearTimeout(hoverTimer);
+          clearHomepageMegaParent();
+        }
+      });
+    });
   }
 
   function setupScrollReveal() {
@@ -215,6 +295,7 @@
     if (!homepageReady()) return;
     removeRedundantAppleParts();
     restructureDesktopNav();
+    bindHomepageMegaLinks();
     bindMegaIntent();
     decorateLongGroups(document);
   }
