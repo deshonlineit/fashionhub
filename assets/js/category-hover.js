@@ -56,7 +56,7 @@
     if (!isDesktop() || !homepageReady()) return;
 
     const header = document.querySelector('.site-header');
-    const navWrap = header?.querySelector('.primary-nav-wrap') || document.querySelector('.primary-nav-wrap');
+    const navWrap = document.querySelector('.primary-nav-wrap');
     const nav = navWrap?.querySelector('.primary-nav');
     const launcher = document.querySelector('.category-launcher.desktop-only');
     const categoryMenu = document.getElementById('desktopCategoryMenu');
@@ -65,36 +65,27 @@
     if (navWrap.dataset.desktopStructured === '1') return;
 
     /*
-     * app.js fills #desktopNav asynchronously on the homepage, so the launcher
-     * is moved only after html.is-ready. Keep the nav bar inside .site-header:
-     * the whole header now sticks as one stable component while scrolling.
+     * The top logo/search header must scroll away. Only the lower menu row stays
+     * sticky. app.js fills #desktopNav asynchronously on the homepage, so this
+     * relocation happens only after html.is-ready to avoid deleting the menu.
      */
     nav.prepend(launcher);
-    if (navWrap.parentElement !== header) header.appendChild(navWrap);
+    header.insertAdjacentElement('afterend', navWrap);
+
+    if (!navWrap.previousElementSibling?.classList?.contains('nav-sticky-sentinel')) {
+      const sentinel = document.createElement('div');
+      sentinel.className = 'nav-sticky-sentinel';
+      sentinel.setAttribute('aria-hidden', 'true');
+      navWrap.before(sentinel);
+
+      const stickyObserver = new IntersectionObserver(entries => {
+        const entry = entries[0];
+        navWrap.classList.toggle('is-stuck', !entry.isIntersecting && entry.boundingClientRect.top < 0);
+      }, { threshold: 0 });
+      stickyObserver.observe(sentinel);
+    }
+
     navWrap.dataset.desktopStructured = '1';
-  }
-
-  function setupStickyHeader() {
-    const header = document.querySelector('.site-header');
-    if (!header || header.dataset.stickyBound === '1') return;
-    header.dataset.stickyBound = '1';
-
-    let ticking = false;
-    const update = () => {
-      const active = window.scrollY > 24;
-      header.classList.toggle('is-sticky-active', active);
-      document.documentElement.classList.toggle('has-sticky-header', active);
-      ticking = false;
-    };
-
-    const requestUpdate = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    };
-
-    update();
-    addEventListener('scroll', requestUpdate, { passive: true });
   }
 
   function decorateLongGroups(root = document) {
@@ -226,7 +217,6 @@
     restructureDesktopNav();
     bindMegaIntent();
     decorateLongGroups(document);
-    setupStickyHeader();
   }
 
   function waitForHomepageReady() {
@@ -250,7 +240,6 @@
     removeRedundantAppleParts();
     bindOutsideClose();
     setupScrollReveal();
-    setupStickyHeader();
     observeLateMenus();
     waitForHomepageReady();
 
