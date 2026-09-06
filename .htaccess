@@ -38,6 +38,25 @@ AddDefaultCharset UTF-8
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
+
+  # Start the shared navigation/data downloads as soon as the HTML response arrives.
+  # These are relative URLs, so the same rules work on localhost and a subfolder/live domain.
+  <FilesMatch "\.html$">
+    Header add Link "<assets/js/config.js>; rel=preload; as=script"
+    Header add Link "<data/home-data.js>; rel=preload; as=script"
+    Header add Link "<assets/js/category-hover.js>; rel=preload; as=script"
+    Header add Link "<assets/css/nav-fix.css>; rel=preload; as=style"
+    Header add Link "<assets/css/sticky-header.css>; rel=preload; as=style"
+    Header add Link "<assets/css/desktop-category-slider.css>; rel=preload; as=style"
+  </FilesMatch>
+  <Files "index.html">
+    Header add Link "<assets/js/app.js>; rel=preload; as=script"
+    Header add Link "<assets/images/banners/hero-fashion.webp>; rel=preload; as=image"
+  </Files>
+  <FilesMatch "^(?:account|archive|blog|cart|category|checkout|contact|post|product|search|shop|wishlist)\.html$">
+    Header add Link "<assets/js/pages.js>; rel=preload; as=script"
+  </FilesMatch>
+
   Header always set X-Content-Type-Options "nosniff"
 </IfModule>
 
