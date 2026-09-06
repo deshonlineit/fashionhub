@@ -87,7 +87,11 @@
   }
 
   function sourceImage(button) {
-    const scope = button.closest('.product-card,.digital-card,.quick-view,.product-layout,.product-summary') || document;
+    const summary = button.closest('.product-summary');
+    const scope = button.closest('.product-card,.digital-card,.quick-view')
+      || summary?.closest('.product-layout')
+      || button.closest('.product-layout')
+      || document;
     return scope.querySelector('.product-card__media img,.digital-card img,.quick-view__image img,.product-main-image img,img');
   }
 
@@ -225,6 +229,21 @@
     };
   }
 
+  function handleThumbnail(button) {
+    const gallery = button.closest('.product-gallery');
+    const thumbImage = button.querySelector('img');
+    const main = gallery?.querySelector('#productMainImg,.product-main-image img');
+    if (!gallery || !thumbImage || !main) return;
+    gallery.querySelectorAll('.product-thumb').forEach(thumb => thumb.classList.toggle('is-active', thumb === button));
+    main.src = thumbImage.currentSrc || thumbImage.src;
+    main.alt = thumbImage.alt || main.alt;
+    main.style.transform = thumbImage.style.transform || 'none';
+    main.classList.remove('is-changing');
+    void main.offsetWidth;
+    main.classList.add('is-changing');
+    setTimeout(() => main.classList.remove('is-changing'), 420);
+  }
+
   function handleCardNavigation(event) {
     const quickButton = event.target.closest('button[data-action="quick-view"][data-product-id]');
     if (quickButton) return false;
@@ -254,6 +273,12 @@
 
     document.addEventListener('click', event => {
       if (handleCardNavigation(event)) return;
+      const thumb = event.target.closest('[data-action="thumb"]');
+      if (thumb) {
+        event.preventDefault();
+        handleThumbnail(thumb);
+        return;
+      }
       const button = event.target.closest(returnSelector);
       if (button) prepareReturn(button);
     }, true);
