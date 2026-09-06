@@ -84,6 +84,7 @@
   }
 
   .primary-nav{
+    position:relative!important;
     width:var(--shell)!important;
     height:65px;
     min-height:65px;
@@ -112,10 +113,12 @@
     align-items:center;
   }
 
+  /* Keep the menu centered exactly where it is and use the empty far-left area for All Categories. */
   .primary-nav>.category-launcher{
-    position:relative!important;
-    left:auto!important;
-    top:auto!important;
+    position:absolute!important;
+    left:calc(50% - 50vw + 20px)!important;
+    top:50%!important;
+    transform:translateY(-50%)!important;
     z-index:10010!important;
     flex:0 0 auto;
     height:65px;
