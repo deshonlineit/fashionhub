@@ -4,9 +4,12 @@
   const DESKTOP = '(min-width: 981px)';
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let hoverTimer = 0;
+  let readyObserver = null;
 
   const isDesktop = () => matchMedia(DESKTOP).matches;
   const text = el => (el?.textContent || '').trim().replace(/\s+/g, ' ');
+  const isHomepage = () => !document.body.dataset.page && !!document.getElementById('heroSlider');
+  const homepageReady = () => !isHomepage() || document.documentElement.classList.contains('is-ready');
 
   function ensureFavicon() {
     if (document.querySelector('link[rel~="icon"]')) return;
@@ -42,14 +45,23 @@
   }
 
   function restructureDesktopNav() {
-    if (!isDesktop()) return;
+    if (!isDesktop() || !homepageReady()) return;
+
     const header = document.querySelector('.site-header');
     const navWrap = document.querySelector('.primary-nav-wrap');
     const nav = navWrap?.querySelector('.primary-nav');
     const launcher = document.querySelector('.category-launcher.desktop-only');
-    if (!header || !navWrap || !nav || !launcher) return;
+    const categoryMenu = document.getElementById('desktopCategoryMenu');
+
+    if (!header || !navWrap || !nav || !launcher || !categoryMenu) return;
     if (navWrap.dataset.desktopStructured === '1') return;
 
+    /*
+     * Important: on the homepage app.js fills #desktopNav asynchronously.
+     * Moving the launcher into #desktopNav before app.js finishes causes
+     * renderNavigation() to delete the launcher and #desktopCategoryMenu.
+     * We therefore only relocate it after the homepage adds html.is-ready.
+     */
     nav.prepend(launcher);
     header.insertAdjacentElement('afterend', navWrap);
 
@@ -189,19 +201,41 @@
     window.setTimeout(() => mo.disconnect(), 5000);
   }
 
-  function init() {
-    ensureFavicon();
+  function finishMenuSetup() {
+    if (!homepageReady()) return;
     removeRedundantAppleParts();
     restructureDesktopNav();
     bindMegaIntent();
     decorateLongGroups(document);
+  }
+
+  function waitForHomepageReady() {
+    if (homepageReady()) {
+      finishMenuSetup();
+      return;
+    }
+
+    if (readyObserver) return;
+    readyObserver = new MutationObserver(() => {
+      if (!document.documentElement.classList.contains('is-ready')) return;
+      readyObserver.disconnect();
+      readyObserver = null;
+      finishMenuSetup();
+    });
+    readyObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  function init() {
+    ensureFavicon();
+    removeRedundantAppleParts();
     bindOutsideClose();
     setupScrollReveal();
     observeLateMenus();
+    waitForHomepageReady();
 
     addEventListener('resize', () => {
       clearTimeout(hoverTimer);
-      if (isDesktop()) restructureDesktopNav();
+      if (homepageReady() && isDesktop()) restructureDesktopNav();
     }, { passive: true });
   }
 
