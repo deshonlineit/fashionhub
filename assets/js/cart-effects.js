@@ -359,7 +359,6 @@
       const cycle = cycleWidth();
       if (!cycle) return;
       if (rail.scrollLeft >= cycle) rail.scrollLeft -= cycle;
-      if (rail.scrollLeft < 0) rail.scrollLeft += cycle;
     };
     const stepSize = () => {
       const card = rail.querySelector('.category-card');
@@ -480,7 +479,8 @@
 
   function setupInfiniteHero() {
     const track = document.getElementById('heroSlides');
-    if (!track || track.dataset.fhInfiniteHero === '1') return;
+    const dots = document.getElementById('heroDots');
+    if (!track || !dots || track.dataset.fhInfiniteHero === '1') return;
     const originals = [...track.children].filter(node => node.classList?.contains('hero-slide') && node.dataset.loopClone !== '1');
     const count = originals.length;
     if (count < 2) return;
@@ -493,8 +493,16 @@
     track.append(trailing);
     track.dataset.fhInfiniteHero = '1';
 
-    let logicalIndex = 0;
+    const activeDotIndex = () => {
+      const buttons = [...dots.querySelectorAll('[data-hero-index]')];
+      const active = buttons.find(button => button.getAttribute('aria-current') === 'true' || button.classList.contains('is-active'));
+      const index = active ? buttons.indexOf(active) : 0;
+      return Math.max(0, Math.min(count - 1, index));
+    };
+
+    let logicalIndex = activeDotIndex();
     let pendingJump = null;
+    let syncQueued = false;
 
     const setA11y = index => {
       leading.setAttribute('aria-hidden', 'true');
@@ -514,16 +522,8 @@
       requestAnimationFrame(() => { delete track.dataset.fhHeroInternal; });
     };
 
-    writePosition(1, true);
-    setA11y(0);
-
-    const observer = new MutationObserver(() => {
-      if (track.dataset.fhHeroInternal === '1') return;
-      const match = String(track.style.transform || '').match(/translate3d\(-?([0-9.]+)%,\s*0(?:px)?,\s*0(?:px)?\)/i);
-      if (!match) return;
-      const target = Math.round(Number(match[1]) / 100) % count;
-      if (!Number.isFinite(target)) return;
-
+    const moveTo = target => {
+      target = Math.max(0, Math.min(count - 1, Number(target) || 0));
       pendingJump = null;
       let visualPosition = target + 1;
       if (!reduceMotion.matches && logicalIndex === count - 1 && target === 0) {
@@ -533,12 +533,28 @@
         visualPosition = 0;
         pendingJump = count;
       }
-
       logicalIndex = target;
       setA11y(target);
       writePosition(visualPosition, reduceMotion.matches);
-    });
-    observer.observe(track, { attributes:true, attributeFilter:['style'] });
+    };
+
+    const scheduleSync = () => {
+      if (track.dataset.fhHeroInternal === '1' || syncQueued) return;
+      syncQueued = true;
+      queueMicrotask(() => {
+        syncQueued = false;
+        if (track.dataset.fhHeroInternal === '1') return;
+        moveTo(activeDotIndex());
+      });
+    };
+
+    writePosition(logicalIndex + 1, true);
+    setA11y(logicalIndex);
+
+    const trackObserver = new MutationObserver(scheduleSync);
+    trackObserver.observe(track, { attributes:true, attributeFilter:['style'] });
+    const dotsObserver = new MutationObserver(scheduleSync);
+    dotsObserver.observe(dots, { attributes:true, subtree:true, attributeFilter:['class','aria-current'] });
 
     track.addEventListener('transitionend', event => {
       if (event.target !== track || event.propertyName !== 'transform' || pendingJump == null) return;
