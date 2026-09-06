@@ -52,6 +52,7 @@
 @keyframes fh-check-pop{0%{transform:scale(.5);opacity:.2}65%{transform:scale(1.16);opacity:1}100%{transform:scale(1)}}
 :is([data-action="add-cart"],[data-action="add-product"])[data-product-id]:disabled{opacity:1!important;pointer-events:none!important}
 .add-button{width:auto!important;height:36px!important;flex:0 0 auto!important}
+.product-card__media img,.digital-card>img{cursor:pointer}
 
 /* Slow premium fly-to-cart / return-to-product motion. */
 .fh-cart-fly{
@@ -73,49 +74,49 @@
 .product-card.fh-product-return-hit,.digital-card.fh-product-return-hit,.product-layout.fh-product-return-hit{animation:fh-product-return-hit .94s cubic-bezier(.2,.8,.2,1)}
 @keyframes fh-product-return-hit{0%,100%{box-shadow:inherit}42%{box-shadow:0 0 0 4px rgba(245,44,103,.11),0 18px 44px rgba(245,44,103,.16)}}
 
-/* Account + cart actions on the right side of the fixed navigation. */
+/* Account + Cart stay in the free space at the far right of the sticky navigation. */
 @media (min-width:981px){
   .primary-nav{position:relative!important}
-  .primary-nav-wrap.is-stuck .primary-nav{padding-right:92px!important}
+  .primary-nav-wrap.is-stuck .primary-nav{padding-inline:0!important}
   .fh-sticky-actions{
     position:absolute;
-    right:0;
+    right:max(18px,calc((100vw - var(--shell))/2));
     top:50%;
     z-index:2147483000;
     display:flex;
     align-items:center;
-    gap:7px;
+    gap:5px;
     opacity:0;
     visibility:hidden;
     pointer-events:none;
     transform:translateY(-50%) translateX(10px);
-    transition:opacity .34s ease,transform .46s cubic-bezier(.2,.7,.2,1),visibility .34s ease;
+    transition:opacity .28s ease,transform .4s cubic-bezier(.2,.7,.2,1),visibility .28s ease;
   }
   .primary-nav-wrap.is-stuck .fh-sticky-actions{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(-50%) translateX(0)}
   .fh-sticky-action{
     position:relative;
-    width:40px;
-    height:40px;
+    width:42px;
+    height:42px;
     padding:0;
-    border:1px solid #e3e5eb;
-    border-radius:12px;
-    background:rgba(255,255,255,.98);
-    color:#343846;
+    border:0;
+    border-radius:10px;
+    background:transparent;
+    color:var(--ink-soft,#343846);
     display:grid;
     place-items:center;
     cursor:pointer;
-    box-shadow:0 7px 20px rgba(20,25,38,.075);
-    transition:background-color .28s ease,color .28s ease,border-color .28s ease,box-shadow .32s ease,transform .32s cubic-bezier(.2,.7,.2,1);
+    box-shadow:none;
+    transition:background-color .25s ease,color .25s ease,transform .28s cubic-bezier(.2,.7,.2,1);
   }
-  .fh-sticky-action:hover{background:#fff1f5;color:var(--accent-strong);border-color:#ffd2df;box-shadow:0 10px 24px rgba(245,44,103,.12);transform:translateY(-1px)}
-  .fh-sticky-action>svg,.fh-sticky-action-icon>svg{width:18px;height:18px}
+  .fh-sticky-action:hover{background:var(--accent-soft,#fff1f5);color:var(--accent-strong);transform:translateY(-1px)}
+  .fh-sticky-action>svg,.fh-sticky-action-icon>svg{width:22px;height:22px;stroke-width:1.7}
   .fh-sticky-action-icon{position:relative;display:grid;place-items:center}
   .fh-sticky-cart-count{
     position:absolute;
     right:-9px;
-    top:-9px;
-    min-width:17px;
-    height:17px;
+    top:-8px;
+    min-width:18px;
+    height:18px;
     padding:0 4px;
     border-radius:99px;
     display:grid;
@@ -249,10 +250,9 @@ body[data-page="product"] .product-tab-panel .sidebar-card{padding:16px!importan
 body[data-page="product"] .spec-table td{padding:12px!important}
 
 @media (max-width:1180px) and (min-width:981px){
-  .primary-nav-wrap.is-stuck .primary-nav{padding-right:80px!important}
-  .fh-sticky-actions{right:2px;gap:5px}
-  .fh-sticky-action{width:35px;height:35px;border-radius:10px}
-  .fh-sticky-action>svg,.fh-sticky-action-icon>svg{width:16px;height:16px}
+  .fh-sticky-actions{right:12px;gap:3px}
+  .fh-sticky-action{width:36px;height:36px;border-radius:9px}
+  .fh-sticky-action>svg,.fh-sticky-action-icon>svg{width:18px;height:18px}
   body[data-page="product"] .product-layout{gap:30px!important}
 }
 
