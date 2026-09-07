@@ -1,88 +1,136 @@
-# FashionHub Homepage V2
+# FashionHub
 
-A responsive ecommerce homepage for physical products and digital downloads, built with plain HTML, modern CSS and Vanilla JavaScript.
+FashionHub is a framework-free ecommerce storefront being developed with Vanilla JavaScript, HTML/CSS, Core PHP and MySQL/MariaDB.
 
-## Included
+Current application version: **0.1.0-dev**
 
-- Three-slide hero with product/offer elements
-- Infinite-loop circular category rail
-- Product slider and grid switching
-- Popular products, flash deals, new arrivals and exclusive products
-- Physical and digital product sections
-- Category/department sections
-- Coupons, gift wrapping and payment offers
-- Reviews, brands, blog, social gallery, app promotion and newsletter
-- Desktop category launcher
-- Desktop and mobile navigation with three menu levels
-- Mobile drawer with separate **Menu** and **Categories** tabs
-- Search suggestions, wishlist, cart drawer and quick-view modal
-- Local WebP imagery and system fonts only
-- API-first homepage data with an offline fallback
+Version history is maintained in [`CHANGELOG.md`](CHANGELOG.md). The development sequence is documented in [`docs/DEVELOPMENT-ROADMAP.md`](docs/DEVELOPMENT-ROADMAP.md).
 
-## Preview locally
+## Current frontend
 
-The page can be opened directly by double-clicking `index.html`; the bundled JavaScript fallback supplies the homepage data.
+The existing storefront includes:
 
-For normal HTTP testing with XAMPP, copy the folder to:
+- Responsive homepage and secondary pages
+- Physical and digital products
+- Product/category/search/archive pages
+- Single product page
+- Wishlist and cart drawer
+- Full cart and checkout UI
+- WooCommerce-style customer account UI
+- Desktop and mobile navigation
+- Multi-level category browser
+- Infinite product/category/review/hero sliders
+- Clean extensionless public URLs through Apache rewrite rules
+- Local WebP images and system fonts only
+- No frontend framework or external font dependency
 
-```text
-C:\xampp\htdocs\fashionhub-home-v2\
-```
+## Backend development
 
-Start Apache and open:
+The production backend is now being introduced incrementally without breaking the existing storefront.
 
-```text
-http://localhost/fashionhub-home-v2/
-```
-
-Or use PHP's local server from this folder:
-
-```bash
-php -S 127.0.0.1:8080
-```
-
-Then open `http://127.0.0.1:8080`.
-
-## Backend connection
-
-Edit `assets/js/config.js`. The frontend currently requests `data/home.json` and automatically falls back to `data/home-data.js` when the page is opened directly or the API is unavailable.
-
-Detailed PHP and Laravel instructions are in `docs/API-INTEGRATION.md`.
-
-## Main files
+The first backend foundation includes:
 
 ```text
-index.html
-assets/css/app.css
-assets/js/config.js
-assets/js/app.js
-data/home.json
-data/home-data.js
-backend-examples/php/home.php
-docs/API-INTEGRATION.md
+includes/
+  bootstrap.php
+  config.example.php
+  db.php
+  api.php
+
+api/v1/
+  health/index.php
+  products/index.php
+  categories/index.php
+
+database/
+  schema.sql
 ```
 
-## Scope
+The catalog schema supports categories, products, product images, attributes, attribute terms and product variations.
 
-This package contains the homepage frontend only. Product, category, cart, checkout, account and blog links are UI placeholders ready to connect to real routes later.
+The existing bundled frontend data remains active during this first backend phase. The next phase imports the current catalog into MySQL before switching the storefront rendering to the API.
 
-## Complete Storefront Pages
+## XAMPP
 
-The package now includes a connected multi-page storefront using the same design system and no framework/CMS/library:
+Recommended local path:
 
-- `index.html` — homepage
-- `shop.html` — all-products catalog with filtering, sorting, grid/list views
-- `archive.html` — offers/deals product archive
-- `category.html?cat=women` — category archive (also `men`, `electronics`, `digital`, etc.)
-- `search.html?q=watch` — search results
-- `product.html?id=3` — physical product detail
-- `product.html?id=31` — digital-download product detail with license/download UI
-- `blog.html` — blog archive
-- `post.html` — single article
-- `cart.html` — full cart
-- `checkout.html` — checkout form, delivery and payment UI
-- `wishlist.html` — saved products
-- `account.html` — customer dashboard and downloads
-- `contact.html` — customer support form
+```text
+C:\xampp\htdocs\fashionhub
+```
 
-Secondary pages share `assets/js/pages.js` and `assets/css/pages.css`. Product/cart/wishlist data remains API-friendly and cart/wishlist state uses the same localStorage keys as the homepage demo.
+Start Apache + MySQL and open:
+
+```text
+http://localhost/fashionhub/
+```
+
+For the new backend:
+
+1. Create a MySQL database named `fashionhub`.
+2. Import `database/schema.sql`.
+3. Copy `includes/config.example.php` to `includes/config.php`.
+4. Test:
+
+```text
+http://localhost/fashionhub/api/v1/health/
+```
+
+Detailed setup: [`docs/BACKEND-SETUP.md`](docs/BACKEND-SETUP.md).
+
+## API v1
+
+Initial endpoints:
+
+```text
+GET /api/v1/health/
+GET /api/v1/products/
+GET /api/v1/categories/
+```
+
+Examples:
+
+```text
+/api/v1/products/?category=women
+/api/v1/products/?slug=heritage-leather-handbag
+/api/v1/products/?search=dress&page=1&limit=24
+/api/v1/categories/?tree=1
+```
+
+API query parameters are internal data-access parameters. Customer-facing storefront URLs remain clean and extensionless.
+
+## Public storefront URLs
+
+Examples:
+
+```text
+/
+/shop
+/new-arrivals
+/category-women
+/product-heritage-leather-handbag-p3
+/cart
+/checkout
+/account
+/wishlist
+/blog
+/contact
+```
+
+The rewrite rules are designed to work when FashionHub is installed at the domain root or inside a subfolder such as `/fashionhub/`.
+
+## Main documentation
+
+- [`CHANGELOG.md`](CHANGELOG.md) — version-by-version changes
+- [`docs/DEVELOPMENT-ROADMAP.md`](docs/DEVELOPMENT-ROADMAP.md) — implementation phases
+- [`docs/BACKEND-SETUP.md`](docs/BACKEND-SETUP.md) — XAMPP/live backend setup
+- [`docs/API-INTEGRATION.md`](docs/API-INTEGRATION.md) — earlier frontend API integration notes
+- [`docs/QA-REPORT.md`](docs/QA-REPORT.md) — existing frontend QA notes
+
+## Development rules
+
+- No framework unless the project direction is explicitly changed.
+- No required third-party frontend dependency.
+- Database access uses PDO prepared statements.
+- Secrets belong in `includes/config.php` or environment variables and are never committed.
+- Every development phase updates `VERSION` and `CHANGELOG.md`.
+- Existing storefront behavior should remain usable while backend features are migrated step by step.

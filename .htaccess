@@ -2,7 +2,7 @@
 # Portable clean public URLs for localhost subfolders and live hosting.
 
 AddDefaultCharset UTF-8
-DirectoryIndex index.html
+DirectoryIndex index.html index.php
 
 <IfModule mod_setenvif.c>
   SetEnvIf Host "^localhost(?::[0-9]+)?$" fashionhub_local=1
@@ -39,7 +39,7 @@ DirectoryIndex index.html
   RewriteCond %{THE_REQUEST} \s/+[^?\s]*(account|archive|blog|cart|category|checkout|contact|post|product|search|shop|wishlist)\.html(?:[?\s]) [NC]
   RewriteRule ^(account|archive|blog|cart|category|checkout|contact|post|product|search|shop|wishlist)\.html$ $1 [R=301,L,NE,QSD]
 
-  # Real files/directories now pass through untouched (CSS, JS, images, backend files, etc.).
+  # Real files/directories now pass through untouched (CSS, JS, images, backend files, API directories, etc.).
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]

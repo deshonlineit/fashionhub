@@ -1,0 +1,24 @@
+# Local/private configuration
+/includes/config.php
+.env
+.env.*
+!.env.example
+
+# Runtime files
+/logs/*
+!/logs/.gitkeep
+/uploads/*
+!/uploads/.gitkeep
+/tmp/*
+!/tmp/.gitkeep
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Local database dumps/backups
+/database/*.local.sql
+/database/backups/
