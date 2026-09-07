@@ -13,7 +13,7 @@ try {
     fashionhub_api_json([
         'ok' => true,
         'service' => 'fashionhub-api',
-        'version' => (string) ($config['app']['version'] ?? '0.1.0-dev'),
+        'version' => (string) ($config['app']['version'] ?? '0.2.0-dev'),
         'environment' => (string) ($config['app']['env'] ?? 'local'),
         'database' => [
             'connected' => true,
