@@ -1,5 +1,5 @@
 -- FashionHub catalog schema
--- Version: 0.1.0-dev
+-- Version: 0.2.0-dev
 -- Target: MySQL 8.0+ / MariaDB 10.5+
 -- Import this file into the database selected for FashionHub.
 
@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS fh_categories (
 CREATE TABLE IF NOT EXISTS fh_products (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     category_id BIGINT UNSIGNED NULL,
+    department VARCHAR(120) NULL,
     sku VARCHAR(120) NULL,
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(190) NOT NULL,
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS fh_products (
     status ENUM('draft','published','archived') NOT NULL DEFAULT 'draft',
     short_description TEXT NULL,
     description MEDIUMTEXT NULL,
+    features_json LONGTEXT NULL,
     regular_price DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     sale_price DECIMAL(14,2) NULL,
     cost_price DECIMAL(14,2) NULL,
@@ -63,6 +65,7 @@ CREATE TABLE IF NOT EXISTS fh_products (
     UNIQUE KEY uq_fh_products_slug (slug),
     UNIQUE KEY uq_fh_products_sku (sku),
     KEY idx_fh_products_category_status (category_id, status),
+    KEY idx_fh_products_department_status (department, status),
     KEY idx_fh_products_status_featured (status, featured),
     KEY idx_fh_products_type_status (product_type, status),
     KEY idx_fh_products_stock (stock_status, stock_qty),
@@ -159,6 +162,20 @@ CREATE TABLE IF NOT EXISTS fh_variation_terms (
     CONSTRAINT fk_fh_variation_terms_term
         FOREIGN KEY (term_id) REFERENCES fh_attribute_terms(id)
         ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS fh_catalog_imports (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    app_version VARCHAR(40) NOT NULL,
+    source_file VARCHAR(255) NOT NULL,
+    source_sha256 CHAR(64) NOT NULL,
+    categories_count INT UNSIGNED NOT NULL DEFAULT 0,
+    products_count INT UNSIGNED NOT NULL DEFAULT 0,
+    images_count INT UNSIGNED NOT NULL DEFAULT 0,
+    imported_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_fh_catalog_imports_imported (imported_at),
+    KEY idx_fh_catalog_imports_hash (source_sha256)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
