@@ -22,7 +22,7 @@ try {
 
     fashionhub_api_json([
         'ok' => true,
-        'version' => (string) ($config['app']['version'] ?? '0.2.0-dev'),
+        'version' => (string) ($config['app']['version'] ?? '0.3.0-dev'),
         'catalog' => [
             'products' => $products,
             'categories' => $categories,
