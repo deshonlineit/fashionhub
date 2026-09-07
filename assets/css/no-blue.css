@@ -10,10 +10,10 @@
 .campaign-card--men{
   --campaign-bg:#fff1f5!important;
 }
-.app-banner{
+html body .app-banner{
   background:linear-gradient(120deg,#fff0f5 0%,#ffe2ea 56%,#fff6f8 100%)!important;
 }
-.newsletter{
+html body .newsletter{
   background:linear-gradient(120deg,#fff3f7 0%,#fff 48%,#fff7f9 100%)!important;
 }
 
@@ -23,8 +23,8 @@
 }
 
 /* Secondary-page banner variants */
-.page-banner--blue,
-.page-banner--violet{
+body .page-banner--blue,
+body .page-banner--violet{
   background:linear-gradient(115deg,#fff3f7 0%,#ffe2ea 100%)!important;
   border-color:#ffd7e2!important;
 }
