@@ -2,7 +2,7 @@
 
 FashionHub backend development uses Core PHP + PDO + MySQL/MariaDB. There is no framework, Composer package or external runtime dependency.
 
-Current backend version: `0.2.0-dev`.
+Current backend version: `0.3.0-dev`.
 
 ## Requirements
 
@@ -25,6 +25,8 @@ C:\xampp\htdocs\fashionhub
 4. Copy `includes/config.example.php` to `includes/config.php` if your credentials differ from the defaults.
 5. Seed the current storefront catalog.
 6. Run the catalog verifier.
+7. Test the storefront API.
+8. Open the normal clean storefront URL.
 
 Default XAMPP database values:
 
@@ -89,6 +91,8 @@ FASHIONHUB_DEBUG=0
 
 Never expose database errors to customers in production.
 
+The clean public root remains the same on live hosting. `index.php` is only the internal DirectoryIndex wrapper for the homepage; customers do not need to use `.php` URLs.
+
 ## API endpoints — v1
 
 After importing/seeding the catalog:
@@ -96,6 +100,7 @@ After importing/seeding the catalog:
 ```text
 GET /fashionhub/api/v1/health/
 GET /fashionhub/api/v1/catalog/status/
+GET /fashionhub/api/v1/storefront/
 GET /fashionhub/api/v1/products/
 GET /fashionhub/api/v1/categories/
 ```
@@ -105,9 +110,38 @@ On a domain-root deployment:
 ```text
 GET /api/v1/health/
 GET /api/v1/catalog/status/
+GET /api/v1/storefront/
 GET /api/v1/products/
 GET /api/v1/categories/
 ```
+
+### Storefront payload
+
+```text
+/api/v1/storefront/
+```
+
+This is the primary `0.3.x-dev` frontend payload. Product/category catalog values come from MySQL. Static merchandising content remains in `data/home.json` during this migration phase.
+
+After a normal page load, check the browser console:
+
+```js
+document.documentElement.dataset.catalogSource
+```
+
+Expected after a successful database connection:
+
+```text
+mysql
+```
+
+If the database/API cannot respond, the storefront intentionally uses the bundled fallback and reports:
+
+```text
+fallback
+```
+
+See `docs/STOREFRONT-API.md`.
 
 ### Products filters
 
@@ -121,7 +155,7 @@ GET /api/v1/categories/
 /api/v1/products/?page=1&limit=24
 ```
 
-The product response now includes department and product feature data imported from the current storefront source.
+The product response includes department and product feature data imported from the current storefront source.
 
 The query parameters above are API parameters only. Public customer-facing product/category URLs remain clean and extensionless.
 
@@ -149,7 +183,7 @@ A healthy installation returns JSON similar to:
 {
   "ok": true,
   "service": "fashionhub-api",
-  "version": "0.2.0-dev",
+  "version": "0.3.0-dev",
   "database": {
     "connected": true,
     "catalog_schema": true
@@ -159,6 +193,24 @@ A healthy installation returns JSON similar to:
 
 If `connected` fails, verify the database credentials. If `catalog_schema` is false, import `database/schema.sql`.
 
+## Local Phase 3 verification
+
+Open these in order:
+
+```text
+http://localhost/fashionhub/api/v1/health/
+http://localhost/fashionhub/api/v1/catalog/status/
+http://localhost/fashionhub/api/v1/storefront/
+http://localhost/fashionhub/
+http://localhost/fashionhub/shop
+http://localhost/fashionhub/category-women
+http://localhost/fashionhub/product-heritage-leather-handbag-p3
+```
+
+The storefront pages should use the same design as before while their product/category values come from MySQL.
+
 ## Current development rule
 
-The existing storefront still reads its bundled data during `0.2.x-dev`. Do not remove `data/home-data.js` or `data/home.json` yet. Phase `0.3.x-dev` will connect storefront rendering to the database API with the bundled data retained only as a controlled development fallback.
+MySQL is now the storefront catalog authority. Keep `data/home.json` because it still supplies static merchandising content and is also the repeatable catalog seed source. Keep `data/home-data.js` as the controlled frontend fallback until production hardening removes or replaces that fallback strategy.
+
+Cart quantities are still client-side in `0.3.x-dev`. Server-side cart/session ownership and stock validation are Phase 4 (`0.4.x-dev`).
