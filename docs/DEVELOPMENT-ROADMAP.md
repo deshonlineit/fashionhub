@@ -38,16 +38,22 @@ See `docs/CATALOG-SEED.md`.
 
 ## Phase 3 — Connect storefront to API (`0.3.x-dev`)
 
-Status: next.
+Status: complete.
 
-- Homepage products from `/api/v1/products/`.
-- Shop/category/search pages from the database.
-- Product page resolved from clean product slug internally.
-- Keep the bundled data as an explicit development fallback only.
-- Add loading/error/empty states without changing the current design.
-- Preserve existing cart IDs, animations, clean URLs and current storefront styling.
+- Added `/api/v1/storefront/` compatibility payload built from the current MySQL catalog.
+- Homepage product/category rendering is database-first.
+- Shop/category/search/deals pages use the database catalog.
+- Product, cart, wishlist, checkout and account runtimes receive the same database-backed product source.
+- Existing clean product/category/search routes remain unchanged.
+- Existing cart IDs, animations, quick view behavior and design are preserved.
+- Bundled data remains available only as a controlled runtime fallback.
+- Static merchandising content such as hero copy, reviews and blog fixtures remains in `data/home.json` until dedicated CMS/admin storage is introduced.
+
+See `docs/STOREFRONT-API.md`.
 
 ## Phase 4 — Server-side cart (`0.4.x-dev`)
+
+Status: next.
 
 - PHP session cart.
 - Guest cart.
@@ -55,6 +61,7 @@ Status: next.
 - Cart merge after login.
 - Stock validation on every mutation.
 - Existing fly-to-cart and mini-cart UI retained.
+- Keep localStorage only as a short-lived client cache/migration bridge, not as order authority.
 
 ## Phase 5 — Customers and My Account (`0.5.x-dev`)
 
