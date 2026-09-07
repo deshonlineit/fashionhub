@@ -13,7 +13,7 @@ Versioning starts with `0.1.0-dev`. The existing storefront remains usable while
 
 ## Phase 1 — Backend foundation (`0.1.x-dev`)
 
-Status: in progress.
+Status: complete.
 
 - Core PHP bootstrap.
 - PDO MySQL connection.
@@ -24,18 +24,28 @@ Status: in progress.
 
 ## Phase 2 — Import current catalog (`0.2.x-dev`)
 
-- Convert the current `home-data.js` products/categories into SQL seed data.
+Status: complete.
+
+- Import the current `data/home.json` catalog directly into MySQL.
 - Preserve current product IDs so existing links/cart data do not break.
-- Populate galleries, product type, price, stock, SEO metadata and categories.
-- Add an import/seed verification script.
+- Populate categories, department, physical/digital type, regular/sale price, stock defaults, SEO metadata, ratings, badges, feature lists and images.
+- Keep the importer repeatable for development.
+- Record import history with source SHA-256.
+- Add a catalog verification script.
+- Add a read-only catalog status endpoint.
+
+See `docs/CATALOG-SEED.md`.
 
 ## Phase 3 — Connect storefront to API (`0.3.x-dev`)
 
-- Homepage products from `/api/v1/products`.
+Status: next.
+
+- Homepage products from `/api/v1/products/`.
 - Shop/category/search pages from the database.
 - Product page resolved from clean product slug internally.
 - Keep the bundled data as an explicit development fallback only.
 - Add loading/error/empty states without changing the current design.
+- Preserve existing cart IDs, animations, clean URLs and current storefront styling.
 
 ## Phase 4 — Server-side cart (`0.4.x-dev`)
 
