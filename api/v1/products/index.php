@@ -58,12 +58,14 @@ try {
     $sql = "SELECT
             p.id,
             p.category_id,
+            p.department,
             p.sku,
             p.name,
             p.slug,
             p.product_type,
             p.short_description,
             p.description,
+            p.features_json,
             p.regular_price,
             p.sale_price,
             p.manage_stock,
@@ -125,15 +127,24 @@ try {
         $price = ($sale !== null && $sale >= 0 && $sale < $regular) ? $sale : $regular;
         $stockQty = (int) $row['stock_qty'];
         $stockStatus = (string) $row['stock_status'];
+        $features = [];
+        if (is_string($row['features_json']) && $row['features_json'] !== '') {
+            $decoded = json_decode($row['features_json'], true);
+            if (is_array($decoded)) {
+                $features = array_values(array_filter($decoded, 'is_string'));
+            }
+        }
 
         return [
             'id' => (int) $row['id'],
             'sku' => $row['sku'],
             'name' => $row['name'],
             'slug' => $row['slug'],
+            'department' => $row['department'],
             'type' => $row['product_type'],
             'short_description' => $row['short_description'],
             'description' => $row['description'],
+            'features' => $features,
             'price' => $price,
             'regular_price' => $regular,
             'sale_price' => $sale,
