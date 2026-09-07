@@ -2,6 +2,8 @@
 
 FashionHub backend development uses Core PHP + PDO + MySQL/MariaDB. There is no framework, Composer package or external runtime dependency.
 
+Current backend version: `0.2.0-dev`.
+
 ## Requirements
 
 - PHP 8.1+
@@ -19,9 +21,12 @@ C:\xampp\htdocs\fashionhub
 
 1. Start Apache and MySQL in XAMPP.
 2. Create a database named `fashionhub` in phpMyAdmin.
-3. Select that database and import `database/schema.sql`.
-4. Copy `includes/config.example.php` to `includes/config.php`.
-5. The default local values already match a normal XAMPP MySQL installation:
+3. For a fresh installation, select that database and import `database/schema.sql`.
+4. Copy `includes/config.example.php` to `includes/config.php` if your credentials differ from the defaults.
+5. Seed the current storefront catalog.
+6. Run the catalog verifier.
+
+Default XAMPP database values:
 
 ```php
 'host' => '127.0.0.1',
@@ -32,6 +37,28 @@ C:\xampp\htdocs\fashionhub
 ```
 
 `includes/config.php` is ignored by Git and must never be committed with production credentials.
+
+## Seed the current catalog
+
+From the FashionHub project root:
+
+```bash
+php database/seed-catalog.php
+php database/verify-catalog.php
+```
+
+If PHP is not in the Windows PATH:
+
+```text
+C:\xampp\php\php.exe database\seed-catalog.php
+C:\xampp\php\php.exe database\verify-catalog.php
+```
+
+The seed reads `data/home.json` and preserves the existing product IDs.
+
+If you already imported the older `0.1.x` schema, you do not need to recreate the database. The seed command automatically adds the catalog fields/tables introduced in `0.2.x` before importing the data.
+
+Full details: `docs/CATALOG-SEED.md`.
 
 ## Live hosting setup
 
@@ -64,18 +91,20 @@ Never expose database errors to customers in production.
 
 ## API endpoints — v1
 
-After importing the schema:
+After importing/seeding the catalog:
 
 ```text
 GET /fashionhub/api/v1/health/
+GET /fashionhub/api/v1/catalog/status/
 GET /fashionhub/api/v1/products/
 GET /fashionhub/api/v1/categories/
 ```
 
-On a domain root deployment:
+On a domain-root deployment:
 
 ```text
 GET /api/v1/health/
+GET /api/v1/catalog/status/
 GET /api/v1/products/
 GET /api/v1/categories/
 ```
@@ -92,6 +121,8 @@ GET /api/v1/categories/
 /api/v1/products/?page=1&limit=24
 ```
 
+The product response now includes department and product feature data imported from the current storefront source.
+
 The query parameters above are API parameters only. Public customer-facing product/category URLs remain clean and extensionless.
 
 ### Categories
@@ -102,6 +133,14 @@ The query parameters above are API parameters only. Public customer-facing produ
 /api/v1/categories/?tree=1
 ```
 
+### Catalog status
+
+```text
+/api/v1/catalog/status/
+```
+
+This read-only endpoint reports current published product count, active category count, image count and the latest seed/import record.
+
 ## Health check
 
 A healthy installation returns JSON similar to:
@@ -110,7 +149,7 @@ A healthy installation returns JSON similar to:
 {
   "ok": true,
   "service": "fashionhub-api",
-  "version": "0.1.0-dev",
+  "version": "0.2.0-dev",
   "database": {
     "connected": true,
     "catalog_schema": true
@@ -122,4 +161,4 @@ If `connected` fails, verify the database credentials. If `catalog_schema` is fa
 
 ## Current development rule
 
-The existing storefront still reads its bundled demo data. Do not remove `data/home-data.js` yet. The next phase imports that data to MySQL first, then the frontend will be switched to the API with a controlled fallback.
+The existing storefront still reads its bundled data during `0.2.x-dev`. Do not remove `data/home-data.js` or `data/home.json` yet. Phase `0.3.x-dev` will connect storefront rendering to the database API with the bundled data retained only as a controlled development fallback.
