@@ -2,7 +2,7 @@
 # Portable clean public URLs for localhost subfolders and live hosting.
 
 AddDefaultCharset UTF-8
-DirectoryIndex index.html index.php
+DirectoryIndex index.php index.html
 
 <IfModule mod_setenvif.c>
   SetEnvIf Host "^localhost(?::[0-9]+)?$" fashionhub_local=1
