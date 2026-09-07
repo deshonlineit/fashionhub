@@ -9,8 +9,28 @@
   const fallback = window.FASHIONHUB_DATA || window.__FASHIONHUB_HOME__ || null;
   const categoryTree = window.FASHIONHUB_CATEGORY_TREE || fallback?.categoryTree || [];
 
+  function storefrontCategories(data) {
+    const source = Array.isArray(fallback?.categories) ? fallback.categories : [];
+    const products = Array.isArray(data?.products) ? data.products : [];
+    if (!source.length || !products.length) return data?.categories || source;
+
+    return source.map(category => {
+      const id = String(category.id || '').toLowerCase();
+      const first = String(category.name || id).toLowerCase().split(/\s|&/).filter(Boolean)[0] || id;
+      const count = products.filter(product => {
+        const productCategory = String(product.category || '').toLowerCase();
+        const department = String(product.department || '').toLowerCase();
+        if (id === 'digital') return product.type === 'digital';
+        if (id === 'electronics') return department.includes('electronics');
+        return productCategory.includes(first) || department.includes(first);
+      }).length;
+      return { ...category, count };
+    });
+  }
+
   function applyData(data, source) {
     if (!data || typeof data !== 'object') return null;
+    if (source === 'mysql') data.categories = storefrontCategories(data);
     if (Array.isArray(categoryTree) && categoryTree.length) data.categoryTree = categoryTree;
     window.__FASHIONHUB_HOME__ = data;
     window.FASHIONHUB_DATA = data;
