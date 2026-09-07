@@ -1,0 +1,40 @@
+/* FashionHub warm/pink UI palette — removes blue/cool-blue interface surfaces without altering product photography. */
+:root{
+  --surface-blue:#fff1f5!important;
+}
+
+/* Homepage hero / campaign surfaces */
+.hero-slide[data-kind="tech"]{
+  --hero-bg:linear-gradient(105deg,#fff3f7 0%,#ffe3ec 100%)!important;
+}
+.campaign-card--men{
+  --campaign-bg:#fff1f5!important;
+}
+.app-banner{
+  background:linear-gradient(120deg,#fff0f5 0%,#ffe2ea 56%,#fff6f8 100%)!important;
+}
+.newsletter{
+  background:linear-gradient(120deg,#fff3f7 0%,#fff 48%,#fff7f9 100%)!important;
+}
+
+/* Department cards can receive blue/purple backgrounds from data. Keep the UI warm. */
+#departmentShowcase .department-feature{
+  --feature-bg:#fff3f6!important;
+}
+
+/* Secondary-page banner variants */
+.page-banner--blue,
+.page-banner--violet{
+  background:linear-gradient(115deg,#fff3f7 0%,#ffe2ea 100%)!important;
+  border-color:#ffd7e2!important;
+}
+
+/* Guard against legacy inline cool backgrounds from the current data bundle. */
+.hero-slide[style*="#eef3ff"],
+.hero-slide[style*="#dfe8ff"]{
+  --hero-bg:linear-gradient(105deg,#fff3f7 0%,#ffe3ec 100%)!important;
+}
+.department-feature[style*="#eef3ff"],
+.department-feature[style*="#f3f0ff"]{
+  --feature-bg:#fff3f6!important;
+}
