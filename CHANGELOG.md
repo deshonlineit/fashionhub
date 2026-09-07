@@ -7,10 +7,34 @@ The project uses Semantic Versioning from this point forward. During active back
 ## [Unreleased]
 
 ### Planned
-- Connect the existing Vanilla JS storefront to the PHP catalog API.
 - Add server-side cart/session handling.
 - Replace demo customer storage with database-backed accounts.
-- Add checkout/order persistence and admin product management.
+- Add checkout/order persistence.
+- Add admin product/order/customer management.
+
+## [0.3.0-dev] - 2026-09-07
+
+### Added
+- Database-backed storefront payload endpoint at `/api/v1/storefront/`.
+- `assets/js/storefront-bootstrap.js` to load the MySQL catalog before secondary-page rendering.
+- `assets/js/home-storefront-bridge.js` to connect the existing homepage renderer to MySQL without duplicating the homepage UI code.
+- Internal `index.php` homepage wrapper while keeping the customer-facing root URL clean.
+- Automatic controlled fallback to the bundled storefront data when the database/API is temporarily unavailable.
+- Storefront source marker on `<html data-catalog-source="mysql|fallback">` for development diagnostics.
+
+### Changed
+- Homepage product/category data now comes from MySQL when the seeded catalog is available.
+- Shop, category, search, deals, product, cart, wishlist, checkout, account, blog, post and contact runtimes now initialize through the storefront API bootstrap.
+- Product groups such as Popular, Flash Deals, New, Digital and Exclusive are rebuilt from the current database catalog.
+- Category product counts come from the database.
+- Department product assignments, bestseller references and hero product references are validated against current database product IDs.
+- Apache now prefers the internal `index.php` homepage wrapper while preserving the clean root URL.
+
+### Compatibility
+- Existing numeric product IDs are preserved, so current cart/wishlist references continue to resolve.
+- Existing design, product sliders, quick view, fly-to-cart effects and clean URL rules are retained.
+- `data/home.json` remains the merchandising/static-content source for non-catalog homepage content during this migration phase.
+- `data/home-data.js` remains a controlled fallback rather than the primary catalog source.
 
 ## [0.2.0-dev] - 2026-09-07
 
